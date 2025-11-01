@@ -23,14 +23,14 @@ else:
     requirements = []
 
 setup(
-    name="neuromorphic-snn-healthcare",
+    name="cortexcore",
     version="0.1.0",
     author="Neuromorphic Healthcare Team",
     author_email="team@neuromorphic-health.ai",
     description="Brain-inspired computing for medical diagnosis using Spiking Neural Networks",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/your-team/neuromorphic-snn-healthcare",
+    url="https://github.com/your-team/cortexcore",
     packages=find_packages(exclude=["tests*", "notebooks*", "demo*"]),
     classifiers=[
         "Development Status :: 3 - Alpha",

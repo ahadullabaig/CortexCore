@@ -100,7 +100,7 @@ def setup_logging(
     Returns:
         Logger instance
     """
-    logger = logging.getLogger('neuromorphic_snn')
+    logger = logging.getLogger('cortexcore')
     logger.setLevel(log_level)
 
     # Console handler

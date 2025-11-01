@@ -52,7 +52,7 @@ Visit `http://localhost:5000` to see the demo!
 ## 📁 Project Structure
 
 ```
-neuromorphic-snn-healthcare/
+cortexcore/
 ├── src/                      # Core source code
 │   ├── data.py              # Data generation & preprocessing
 │   ├── model.py             # SNN model definitions
