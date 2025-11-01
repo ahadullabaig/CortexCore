@@ -1,0 +1,239 @@
+# ============================================
+# NEUROMORPHIC SNN HEALTHCARE - GITIGNORE
+# ============================================
+
+# ==========================================
+# Python
+# ==========================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ==========================================
+# Data Files (Large files should not be in git)
+# ==========================================
+
+# Raw and processed data
+data/raw/
+data/processed/
+data/synthetic/*.npy
+data/synthetic/*.pt
+data/synthetic/*.h5
+data/cache/
+
+# Keep directory structure but not files
+!data/**/.gitkeep
+
+# ==========================================
+# Model Files (Too large for git)
+# ==========================================
+
+# Trained models
+models/*.pt
+models/*.pth
+models/*.h5
+models/*.onnx
+models/*.tflite
+models/*.pb
+models/checkpoints/
+models/trained/
+models/optimized/
+
+# Keep directory structure
+!models/.gitkeep
+
+# ==========================================
+# Experiment Results
+# ==========================================
+
+# Logs and metrics
+experiments/
+results/plots/*.png
+results/plots/*.jpg
+results/plots/*.pdf
+results/metrics/*.json
+results/metrics/*.csv
+logs/
+*.log
+
+# MLflow
+mlruns/
+mlflow.db
+
+# Weights & Biases
+wandb/
+
+# TensorBoard
+runs/
+tensorboard/
+
+# Keep directory structure
+!results/**/.gitkeep
+
+# ==========================================
+# Jupyter Notebooks
+# ==========================================
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Jupyter notebook outputs (optional - uncomment if you want to ignore outputs)
+# */.ipynb_checkpoints/*
+# *.ipynb
+
+# ==========================================
+# Environment & Configuration
+# ==========================================
+
+# Environment variables (contains secrets)
+.env
+.env.local
+.env.*.local
+
+# Keep example file
+!.env.example
+
+# Configuration files with secrets
+config/secrets.yaml
+config/local_config.yaml
+
+# ==========================================
+# Temporary Files
+# ==========================================
+
+# OS temporary files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# ==========================================
+# Docker
+# ==========================================
+
+# Docker volumes
+docker-compose.override.yml
+.dockerignore
+
+# ==========================================
+# Cloud & Deployment
+# ==========================================
+
+# AWS
+.aws/
+*.pem
+
+# GCP
+*.json  # May contain service account keys
+!config/*.json  # But allow config files
+
+# Azure
+.azure/
+
+# ==========================================
+# Hackathon-Specific
+# ==========================================
+
+# Large demo videos (use Git LFS or external storage)
+demo/assets/*.mp4
+demo/assets/*.avi
+demo/assets/*.mov
+
+# Presentation materials (if large)
+resources/presentations/*.pptx
+resources/presentations/*.key
+
+# ==========================================
+# Backup Files
+# ==========================================
+
+# Backup copies
+*.bak
+*.backup
+*.old
+*_backup.*
+*_old.*
+
+# ==========================================
+# Compressed Files
+# ==========================================
+
+# Archives (usually shouldn't be in git)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# ==========================================
+# Keep Empty Directories
+# ==========================================
+
+# Use .gitkeep files to track empty directories
+# Example: echo "" > data/synthetic/.gitkeep

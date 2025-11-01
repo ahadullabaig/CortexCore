@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuromorphic SNN Healthcare - Demo</title>
+
+    <!-- Plotly for visualizations -->
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1>🧠 Neuromorphic SNN Healthcare</h1>
+            <p class="subtitle">Brain-inspired computing for medical diagnosis</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Status Card -->
+        <div class="card">
+            <h2>System Status</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">Server:</span>
+                    <span class="status-badge success">Running</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Model:</span>
+                    <span id="model-status" class="status-badge warning">Loading...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Device:</span>
+                    <span id="device-status" class="status-badge info">Unknown</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Card -->
+        <div class="card">
+            <h2>Signal Generation</h2>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="condition-select">Condition:</label>
+                    <select id="condition-select" class="form-control">
+                        <option value="normal">Normal Sinus Rhythm</option>
+                        <option value="arrhythmia">Arrhythmia</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <button id="generate-btn" class="btn btn-primary">Generate ECG Sample</button>
+                    <button id="predict-btn" class="btn btn-success" disabled>Run Prediction</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ECG Signal Visualization -->
+        <div class="card">
+            <h2>ECG Signal</h2>
+            <div id="ecg-plot" class="plot-container"></div>
+        </div>
+
+        <!-- Spike Raster Visualization -->
+        <div class="card">
+            <h2>Spike Pattern (Neuromorphic Encoding)</h2>
+            <div id="spike-plot" class="plot-container"></div>
+        </div>
+
+        <!-- Prediction Results -->
+        <div class="card" id="results-card" style="display: none;">
+            <h2>Prediction Results</h2>
+            <div class="results-grid">
+                <div class="result-item">
+                    <h3>Classification</h3>
+                    <div id="prediction-class" class="result-value large">-</div>
+                </div>
+                <div class="result-item">
+                    <h3>Confidence</h3>
+                    <div id="prediction-confidence" class="result-value">-</div>
+                </div>
+                <div class="result-item">
+                    <h3>Inference Time</h3>
+                    <div id="inference-time" class="result-value">-</div>
+                </div>
+            </div>
+            <div class="probability-bars">
+                <h3>Class Probabilities</h3>
+                <div class="prob-bar">
+                    <span class="prob-label">Normal:</span>
+                    <div class="prob-bar-bg">
+                        <div id="prob-normal" class="prob-bar-fill" style="width: 0%"></div>
+                    </div>
+                    <span id="prob-normal-text" class="prob-value">0%</span>
+                </div>
+                <div class="prob-bar">
+                    <span class="prob-label">Arrhythmia:</span>
+                    <div class="prob-bar-bg">
+                        <div id="prob-arrhythmia" class="prob-bar-fill arrhythmia" style="width: 0%"></div>
+                    </div>
+                    <span id="prob-arrhythmia-text" class="prob-value">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="card">
+            <h2>Performance Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-label">Energy Efficiency</div>
+                    <div class="metric-value">60% <span class="metric-unit">vs CNN</span></div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Model Accuracy</div>
+                    <div class="metric-value" id="model-accuracy">-</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Sparsity</div>
+                    <div class="metric-value">70% <span class="metric-unit">inactive</span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Built with ❤️ using Spiking Neural Networks | Powered by PyTorch & snnTorch</p>
+        </div>
+    </footer>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

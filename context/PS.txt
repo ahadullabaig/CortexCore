@@ -1,0 +1,22 @@
+Neuromorphic computing — inspired by the human brain — offers energy-efficient and event-driven computation using Spiking Neural Networks (SNNs). This project focuses on developing a GPU-simulated neuromorphic model that mimics the efficiency of brain-inspired computation while using only software-level implementations of SNNs.
+
+1. Problem definition:
+Design and simulate a neuromorphic computing model using SNN for pattern recognition in healthcare signals (e.g., EEG, ECG, or synthetic physiological data) to detect early indicators of neurological or cardiac disorders.
+
+The model must:
+1. Be implemented entirely on conventional hardware (CPU/GPU) using SNN simulation frameworks.
+2. Avoid dependence on real-world medical datasets — synthetic or open-source small datasets can be used.
+3. Demonstrate energy-efficient, event-driven processing comparable to neuromorphic systems.
+
+Model building:
+o Build an SNN using software simulators like Brian2, NEST, SpikingJelly, or Norse (PyTorch-based).
+o Implement biologically inspired learning rules (STDP, SpikeProp).
+o Run training and inference on a GPU environment.
+o Measure recognition accuracy and simulated energy efficiency compared to ANN baselines.
+o Analyze spike dynamics, neuron firing rates, and interpret how the model learns temporal patterns in healthcare signals.
+
+Output:
+• A GPU-based neuromorphic simulation system for healthcare diagnosis tasks.
+• Improved efficiency and interpretability compared to traditional deep learning models.
+
+this is the problem statement for my hackathon.
