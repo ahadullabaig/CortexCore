@@ -28,8 +28,8 @@ This project implements a **brain-inspired neuromorphic computing system** that 
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd cortexcore
+git clone https://github.com/ahadullabaig/CortexCore.git
+cd CortexCore
 
 # Run automated setup
 bash scripts/01_setup_environment.sh
@@ -52,7 +52,7 @@ Visit `http://localhost:5000` to see the demo!
 ## 📁 Project Structure
 
 ```
-cortexcore/
+CortexCore/
 ├── src/                      # Core source code
 │   ├── data.py              # Data generation & preprocessing
 │   ├── model.py             # SNN model definitions
