@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# NEUROMORPHIC SNN HEALTHCARE - ENVIRONMENT SETUP
+# CortexCore - ENVIRONMENT SETUP
 # ============================================
 # Automated setup script for rapid hackathon development
 # Usage: bash scripts/01_setup_environment.sh
@@ -10,7 +10,7 @@
 set -e  # Exit on any error
 
 echo "🚀 ============================================"
-echo "🚀 NEUROMORPHIC SNN HEALTHCARE - SETUP"
+echo "🚀 CortexCore - SETUP"
 echo "🚀 ============================================"
 echo ""
 

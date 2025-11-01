@@ -1,5 +1,5 @@
 /**
- * Neuromorphic SNN Healthcare - Demo JavaScript
+ * CortexCore - Demo JavaScript
  * ==============================================
  *
  * Owner: CS4 / Deployment Engineer
@@ -18,7 +18,7 @@ let currentSpikes = null;
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🧠 Neuromorphic SNN Demo initialized');
+    console.log('🧠 CortexCore Demo initialized');
 
     // Check system health
     checkHealth();
@@ -354,7 +354,7 @@ function formatTime(ms) {
 // Console Styling
 // ============================================
 
-console.log('%c🧠 Neuromorphic SNN Healthcare Demo', 'font-size: 20px; font-weight: bold; color: #667eea;');
+console.log('%c🧠 CortexCore Demo', 'font-size: 20px; font-weight: bold; color: #667eea;');
 console.log('%cBrain-inspired computing for medical diagnosis', 'font-size: 14px; color: #666;');
 console.log('');
 console.log('📊 Features:');

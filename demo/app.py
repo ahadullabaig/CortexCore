@@ -275,7 +275,7 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🧠 NEUROMORPHIC SNN HEALTHCARE - DEMO SERVER")
+    print("🧠 CortexCore - DEMO SERVER")
     print("=" * 60)
     print()
 

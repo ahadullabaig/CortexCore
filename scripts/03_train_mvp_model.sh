@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# NEUROMORPHIC SNN HEALTHCARE - MODEL TRAINING
+# CortexCore - MODEL TRAINING
 # ============================================
 # Trains SNN model on synthetic data
 # Usage: bash scripts/03_train_mvp_model.sh

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# NEUROMORPHIC SNN HEALTHCARE - DATA GENERATION
+# CortexCore - DATA GENERATION
 # ============================================
 # Generates synthetic ECG/EEG data for MVP development
 # Usage: bash scripts/02_generate_mvp_data.sh

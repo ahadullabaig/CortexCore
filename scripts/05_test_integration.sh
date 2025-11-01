@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# NEUROMORPHIC SNN HEALTHCARE - INTEGRATION TESTS
+# CortexCore - INTEGRATION TESTS
 # ============================================
 # Tests end-to-end pipeline
 # Usage: bash scripts/05_test_integration.sh

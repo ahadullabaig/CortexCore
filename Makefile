@@ -1,5 +1,5 @@
 # ============================================
-# Neuromorphic SNN Healthcare - Makefile
+# CortexCore - Makefile
 # ============================================
 # Common commands for development and deployment
 # Usage: make <command>
@@ -14,7 +14,7 @@
 # ============================================
 
 help:  ## Show this help message
-	@echo "🧠 Neuromorphic SNN Healthcare - Available Commands"
+	@echo "🧠 CortexCore - Available Commands"
 	@echo ""
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
@@ -286,7 +286,7 @@ demo-day: clean-all install generate-data train demo  ## Prepare for demo day
 # ============================================
 
 info:  ## Show project information
-	@echo "🧠 Neuromorphic SNN Healthcare"
+	@echo "🧠 CortexCore"
 	@echo ""
 	@echo "📂 Project Structure:"
 	@ls -la

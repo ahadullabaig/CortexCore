@@ -1,5 +1,5 @@
 """
-Neuromorphic SNN Healthcare - Package Setup
+CortexCore - Package Setup
 ==========================================
 
 Installation:

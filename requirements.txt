@@ -1,5 +1,5 @@
 # ============================================
-# NEUROMORPHIC SNN HEALTHCARE - MVP REQUIREMENTS
+# CortexCore - MVP REQUIREMENTS
 # ============================================
 # This is the minimal dependency set for rapid hackathon development
 # Installation: pip install -r requirements.txt

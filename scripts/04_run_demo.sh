@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# NEUROMORPHIC SNN HEALTHCARE - DEMO LAUNCHER
+# CortexCore - DEMO LAUNCHER
 # ============================================
 # Launches Flask demo application
 # Usage: bash scripts/04_run_demo.sh
@@ -145,7 +145,7 @@ def index():
     <!DOCTYPE html>
     <html>
     <head>
-        <title>Neuromorphic SNN Healthcare</title>
+        <title>CortexCore</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -186,7 +186,7 @@ def index():
     </head>
     <body>
         <div class="header">
-            <h1>🧠 Neuromorphic SNN Healthcare</h1>
+            <h1>🧠 CortexCore</h1>
             <p>Brain-inspired computing for medical diagnosis</p>
         </div>
 

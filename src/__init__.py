@@ -1,5 +1,5 @@
 """
-Neuromorphic SNN Healthcare System
+CortexCore System
 ==================================
 
 Brain-inspired computing for medical diagnosis using Spiking Neural Networks.
@@ -16,7 +16,7 @@ License: MIT
 """
 
 __version__ = "0.1.0-mvp"
-__author__ = "Neuromorphic Healthcare Team"
+__author__ = "CortexCore Team"
 
 # Quick imports for convenience
 try:
