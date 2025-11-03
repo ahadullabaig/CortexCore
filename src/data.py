@@ -126,16 +126,20 @@ class ECGDataset(Dataset):
         - Add multi-modal support (ECG + EEG)
     """
 
-    def __init__(self, signals: np.ndarray, labels: np.ndarray, encode_spikes: bool = True):
+    def __init__(self, signals: np.ndarray, labels: np.ndarray, encode_spikes: bool = True, num_steps: int = 100, gain: float = 10.0):
         """
         Args:
             signals: ECG signals [n_samples, signal_length]
             labels: Class labels [n_samples]
             encode_spikes: Whether to encode as spikes
+            num_steps: Number of time steps for spike encoding
+            gain: Spike encoding gain parameter
         """
         self.signals = torch.FloatTensor(signals)
         self.labels = torch.LongTensor(labels)
         self.encode_spikes = encode_spikes
+        self.num_steps = num_steps
+        self.gain = gain
 
     def __len__(self) -> int:
         return len(self.signals)
@@ -145,8 +149,9 @@ class ECGDataset(Dataset):
         label = self.labels[idx]
 
         if self.encode_spikes:
-            # TODO: Implement proper spike encoding here
-            signal = signal  # Placeholder
+            # For MVP: replicate signal across time steps
+            # Shape: [num_steps, signal_length]
+            signal = signal.unsqueeze(0).repeat(self.num_steps, 1)
 
         return signal, label
 

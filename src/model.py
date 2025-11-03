@@ -18,7 +18,7 @@ import torch.nn as nn
 import snntorch as snn
 from snntorch import surrogate
 from snntorch import functional as SF
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 
 # ============================================
 # TODO: Day 2-3 - Basic SNN Model
@@ -43,7 +43,7 @@ class SimpleSNN(nn.Module):
         hidden_size: int = 128,
         output_size: int = 2,
         beta: float = 0.9,
-        spike_grad: Optional[surrogate.SurrogateGradient] = None
+        spike_grad: Optional[Any] = None
     ):
         """
         Args:

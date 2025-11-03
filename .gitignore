@@ -237,3 +237,7 @@ resources/presentations/*.key
 
 # Use .gitkeep files to track empty directories
 # Example: echo "" > data/synthetic/.gitkeep
+
+#Output Documentation
+NEXT_STEPS.md
+PHASE_1_SUCCESS_DOCUMENTATION.md

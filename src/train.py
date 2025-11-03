@@ -56,8 +56,11 @@ def train_epoch(
         optimizer.zero_grad()
 
         # Forward pass
-        # TODO: Handle SNN specific forward pass
-        output = model(data)
+        # SNN returns (spikes, membrane): [time_steps, batch, classes]
+        spikes, membrane = model(data)
+
+        # Sum spikes over time dimension for classification
+        output = spikes.sum(dim=0)  # [batch, classes]
 
         # Calculate loss
         loss = criterion(output, target)
@@ -68,7 +71,11 @@ def train_epoch(
 
         # Metrics
         total_loss += loss.item()
-        # TODO: Calculate accuracy properly for SNN
+
+        # Calculate accuracy
+        _, predicted = output.max(1)
+        total += target.size(0)
+        correct += predicted.eq(target).sum().item()
 
         # Update progress bar
         pbar.set_postfix({
@@ -108,13 +115,20 @@ def validate(
             data, target = data.to(device), target.to(device)
 
             # Forward pass
-            output = model(data)
+            # SNN returns (spikes, membrane): [time_steps, batch, classes]
+            spikes, membrane = model(data)
+
+            # Sum spikes over time dimension for classification
+            output = spikes.sum(dim=0)  # [batch, classes]
 
             # Calculate loss
             loss = criterion(output, target)
             total_loss += loss.item()
 
-            # TODO: Calculate accuracy
+            # Calculate accuracy
+            _, predicted = output.max(1)
+            total += target.size(0)
+            correct += predicted.eq(target).sum().item()
 
     metrics = {
         'loss': total_loss / len(val_loader),

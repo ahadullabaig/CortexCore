@@ -59,27 +59,30 @@ def predict(
     model: nn.Module,
     input_data: Union[torch.Tensor, np.ndarray],
     device: str = 'cuda',
-    return_confidence: bool = True
-) -> Dict[str, Union[int, float, np.ndarray]]:
+    return_confidence: bool = True,
+    num_steps: int = 100,
+    class_names: Optional[List[str]] = None
+) -> Dict[str, Union[int, float, np.ndarray, str]]:
     """
     Make prediction on input data
 
     Args:
         model: Trained model
-        input_data: Input signal
+        input_data: Input signal [signal_length] or [batch, signal_length]
         device: Device for inference
         return_confidence: Whether to return confidence scores
+        num_steps: Number of time steps for SNN (replicate signal)
+        class_names: Optional class names for output
 
     Returns:
-        Prediction dictionary
-
-    TODO:
-        - Add spike pattern visualization
-        - Implement ensemble predictions
-        - Add uncertainty quantification
+        Prediction dictionary with prediction, confidence, class_name, etc.
     """
+    if class_names is None:
+        class_names = ['Normal', 'Arrhythmia']
+
     device = torch.device(device if torch.cuda.is_available() else 'cpu')
     model.eval()
+    model.to(device)
 
     # Convert to tensor if numpy
     if isinstance(input_data, np.ndarray):
@@ -87,7 +90,11 @@ def predict(
 
     # Add batch dimension if needed
     if len(input_data.shape) == 1:
-        input_data = input_data.unsqueeze(0)
+        input_data = input_data.unsqueeze(0)  # [1, signal_length]
+
+    # Replicate across time steps for SNN: [batch, signal_length] -> [num_steps, batch, signal_length]
+    if len(input_data.shape) == 2:
+        input_data = input_data.unsqueeze(0).repeat(num_steps, 1, 1)  # [num_steps, batch, signal_length]
 
     input_data = input_data.to(device)
 
@@ -97,12 +104,14 @@ def predict(
     with torch.no_grad():
         output = model(input_data)
 
-        # TODO: Handle SNN-specific output (spikes + membrane)
-        # For now, assume standard output
+        # Handle SNN-specific output (spikes + membrane)
         if isinstance(output, tuple):
             spikes, membrane = output
             # Use spike counts for prediction
-            output = spikes.sum(dim=0)  # Sum over time
+            output = spikes.sum(dim=0)  # Sum over time: [batch, classes]
+            spike_count = spikes.sum().item()
+        else:
+            spike_count = 0
 
         # Get prediction
         probabilities = torch.softmax(output, dim=1)
@@ -111,14 +120,17 @@ def predict(
 
     inference_time = (time.time() - start_time) * 1000  # ms
 
+    pred_idx = prediction.cpu().item()
     result = {
-        'prediction': prediction.cpu().item(),
+        'prediction': pred_idx,
+        'class_name': class_names[pred_idx],
         'inference_time_ms': inference_time,
+        'spike_count': spike_count
     }
 
     if return_confidence:
         result['confidence'] = confidence.cpu().item()
-        result['probabilities'] = probabilities.cpu().numpy()[0]
+        result['probabilities'] = probabilities.cpu().numpy()[0].tolist()
 
     return result
 

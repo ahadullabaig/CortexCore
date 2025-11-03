@@ -30,8 +30,9 @@ try:
     from src.inference import load_model, predict
     from src.data import rate_encode
     from src.utils import get_device
-except ImportError:
-    print("⚠️  Warning: src modules not fully implemented yet")
+    from src.model import SimpleSNN
+except ImportError as e:
+    print(f"⚠️  Warning: src modules not fully implemented yet: {e}")
 
 # ============================================
 # App Configuration
@@ -59,17 +60,37 @@ def init_model():
 
     if Path(MODEL_PATH).exists():
         try:
-            # TODO: Load actual SNN model from src.model
+            # Load SimpleSNN model
             checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
+
+            # Get model config from checkpoint
+            config = checkpoint.get('config', {})
+            input_size = config.get('input_size', 2500)
+            hidden_size = config.get('hidden_size', 128)
+
+            # Create model instance
+            model = SimpleSNN(
+                input_size=input_size,
+                hidden_size=hidden_size,
+                output_size=2
+            )
+
+            # Load weights using the inference module
+            model = load_model(MODEL_PATH, model, device=DEVICE)
+
             model_info = {
                 'loaded': True,
                 'path': MODEL_PATH,
                 'device': DEVICE,
                 'val_acc': checkpoint.get('val_acc', 'N/A'),
-                'epoch': checkpoint.get('epoch', 'N/A')
+                'epoch': checkpoint.get('epoch', 'N/A'),
+                'input_size': input_size,
+                'hidden_size': hidden_size,
+                'parameters': sum(p.numel() for p in model.parameters())
             }
             print(f"✅ Model loaded from {MODEL_PATH}")
             print(f"   Validation accuracy: {model_info['val_acc']}")
+            print(f"   Parameters: {model_info['parameters']:,}")
         except Exception as e:
             print(f"⚠️  Error loading model: {e}")
             model_info = {'loaded': False, 'error': str(e)}
@@ -110,7 +131,7 @@ def api_predict():
     Expected JSON:
     {
         "signal": [array of values],
-        "encode": true/false
+        "num_steps": 100 (optional)
     }
 
     Returns:
@@ -119,32 +140,39 @@ def api_predict():
         "confidence": confidence_score,
         "probabilities": [prob1, prob2, ...],
         "class_name": "Normal" or "Arrhythmia",
-        "inference_time_ms": time_in_ms
+        "inference_time_ms": time_in_ms,
+        "spike_count": number_of_spikes
     }
-
-    TODO: Day 4-5
-        - Implement actual prediction
-        - Add spike encoding
-        - Return spike patterns for visualization
     """
     try:
+        if model is None:
+            return jsonify({
+                'error': 'Model not loaded',
+                'details': model_info.get('error', 'Unknown error')
+            }), 503
+
         data = request.json
 
         if 'signal' not in data:
             return jsonify({'error': 'Missing signal data'}), 400
 
         signal = np.array(data['signal'])
+        num_steps = data.get('num_steps', 100)
 
-        # TODO: Implement actual prediction
-        # For now, return mock data
-        result = {
-            'prediction': int(np.random.randint(0, 2)),
-            'confidence': float(np.random.rand()),
-            'probabilities': [float(x) for x in np.random.rand(2)],
-            'class_name': 'Normal' if np.random.rand() > 0.5 else 'Arrhythmia',
-            'inference_time_ms': float(np.random.rand() * 100),
-            'warning': 'Using mock predictions - model not implemented yet'
-        }
+        # Ensure signal is the correct length (2500 samples)
+        if len(signal) != 2500:
+            return jsonify({
+                'error': f'Signal must be 2500 samples, got {len(signal)}'
+            }), 400
+
+        # Make prediction using trained SNN
+        result = predict(
+            model,
+            signal,
+            device=DEVICE,
+            return_confidence=True,
+            num_steps=num_steps
+        )
 
         return jsonify(result)
 
@@ -192,36 +220,80 @@ def api_generate_sample():
 @app.route('/api/visualize_spikes', methods=['POST'])
 def api_visualize_spikes():
     """
-    Generate spike visualization data
+    Generate spike visualization data from signal
 
-    TODO: Day 5-6
-        - Encode signal to spikes
-        - Return spike times for raster plot
+    Expected JSON:
+    {
+        "signal": [array of values],
+        "num_steps": 100 (optional),
+        "gain": 10.0 (optional)
+    }
+
+    Returns spike raster data for visualization
     """
     try:
+        if model is None:
+            return jsonify({
+                'error': 'Model not loaded',
+                'details': model_info.get('error', 'Unknown error')
+            }), 503
+
         data = request.json
         signal = np.array(data['signal'])
+        num_steps = data.get('num_steps', 100)
+        gain = data.get('gain', 10.0)
 
-        # TODO: Use actual spike encoding
-        # Mock spike data for now
-        num_steps = 100
-        num_neurons = 10
+        # Ensure signal is correct length
+        if len(signal) != 2500:
+            return jsonify({
+                'error': f'Signal must be 2500 samples, got {len(signal)}'
+            }), 400
+
+        # Convert to tensor
+        signal_tensor = torch.FloatTensor(signal)
+
+        # Normalize signal to [0, 1] range
+        signal_min = signal_tensor.min()
+        signal_max = signal_tensor.max()
+        if signal_max > signal_min:
+            signal_normalized = (signal_tensor - signal_min) / (signal_max - signal_min)
+        else:
+            signal_normalized = torch.zeros_like(signal_tensor)
+
+        # Generate spike representation: replicate signal across time steps
+        # Shape: [num_steps, signal_length]
+        spike_array = signal_normalized.unsqueeze(0).repeat(num_steps, 1).numpy()
+
+        # Apply threshold to convert to binary spikes (for visualization)
+        # Use gain as threshold sensitivity
+        spike_threshold = 1.0 / gain
+        spike_array = (spike_array > spike_threshold).astype(float)
+
+        # Sample neurons for visualization
+        num_neurons_to_show = min(128, spike_array.shape[1])
 
         spike_times = []
         neuron_ids = []
 
-        for neuron in range(num_neurons):
-            n_spikes = np.random.randint(5, 15)
-            times = np.random.choice(num_steps, size=n_spikes, replace=False)
-            spike_times.extend(times.tolist())
-            neuron_ids.extend([neuron] * n_spikes)
+        # Extract spike times for each neuron
+        for neuron_idx in range(num_neurons_to_show):
+            neuron_spikes = spike_array[:, neuron_idx]
+            time_indices = np.where(neuron_spikes > 0)[0]
+            spike_times.extend(time_indices.tolist())
+            neuron_ids.extend([neuron_idx] * len(time_indices))
+
+        # Calculate spike statistics
+        total_spikes = len(spike_times)
+        spike_rate = total_spikes / (num_steps * num_neurons_to_show) if num_neurons_to_show > 0 else 0
 
         return jsonify({
             'spike_times': spike_times,
             'neuron_ids': neuron_ids,
             'num_steps': num_steps,
-            'num_neurons': num_neurons,
-            'warning': 'Using mock spike data - encoding not implemented yet'
+            'num_neurons': num_neurons_to_show,
+            'total_spikes': total_spikes,
+            'spike_rate': float(spike_rate),
+            'gain': gain
         })
 
     except Exception as e:
