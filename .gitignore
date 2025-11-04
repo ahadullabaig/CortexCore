@@ -71,13 +71,7 @@ venv.bak/
 # ==========================================
 
 # Raw and processed data
-data/raw/
-data/processed/
-data/synthetic/*.npy
-data/synthetic/*.pt
-data/synthetic/*.h5
-data/synthetic/*.json
-data/cache/
+data/
 
 # Keep directory structure but not files
 !data/**/.gitkeep
@@ -87,15 +81,7 @@ data/cache/
 # ==========================================
 
 # Trained models
-models/*.pt
-models/*.pth
-models/*.h5
-models/*.onnx
-models/*.tflite
-models/*.pb
-models/checkpoints/
-models/trained/
-models/optimized/
+models/
 
 # Keep directory structure
 !models/.gitkeep
@@ -106,12 +92,7 @@ models/optimized/
 
 # Logs and metrics
 experiments/
-results/plots/*.png
-results/plots/*.jpg
-results/plots/*.pdf
-results/*.json
-results/metrics/*.json
-results/metrics/*.csv
+results/
 logs/
 *.log
 
