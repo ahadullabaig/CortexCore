@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Concise project reference for Claude Code. For detailed guides, see `docs/` directory.
+This file provides guidance to Claude Code when working with code in this repository.
 
 ## Project Overview
 
@@ -51,26 +51,38 @@ make clean                # Remove temp files
 
 ## Architecture
 
-### Module Map
+### Core Module Responsibilities
 
-| File | Purpose | Key Functions |
-|------|---------|---------------|
-| `src/model.py` | SNN architectures | `SimpleSNN`, `measure_energy_efficiency()` |
-| `src/data.py` | Data generation & encoding | `generate_synthetic_ecg()`, `rate_encode()`, `ECGDataset` |
+| File | Purpose | Key APIs |
+|------|---------|----------|
+| `src/data.py` | Data generation & spike encoding | `generate_synthetic_ecg()`, `rate_encode()`, `ECGDataset` |
+| `src/model.py` | SNN architectures | `SimpleSNN`, `STDPLayer`, `measure_energy_efficiency()` |
 | `src/train.py` | Training pipeline | `train_epoch()`, `validate()`, `train_model()` |
-| `src/inference.py` | Prediction & loading | `load_model()`, `predict()` |
-| `src/utils.py` | Utilities | `set_seed()`, `get_device()` |
-| `demo/app.py` | Flask web demo | Endpoints: `/`, `/health`, `/api/predict` |
+| `src/inference.py` | Model loading & prediction | `load_model()`, `predict()`, `batch_predict()` |
+| `src/utils.py` | Utilities | `set_seed()`, `get_device()`, `calculate_clinical_metrics()` |
+| `demo/app.py` | Flask web interface | Routes: `/`, `/health`, `/api/predict`, `/api/visualize_spikes` |
 
-### Data Flow
+### Pipeline Flow
 
 ```
-src/data.py → src/model.py → src/train.py → src/inference.py → demo/app.py
-    ↓              ↓             ↓              ↓                ↓
-Generate       Define SNN    Train with     Run Predict      Web Demo
-Synthetic      LIF Neurons   Surrogate      On Signals       User UI
-ECG/EEG                      Gradients
+Data Generation (src/data.py)
+    ↓
+Spike Encoding (rate_encode: Poisson process)
+    ↓
+SNN Forward Pass (src/model.py: LIF neurons)
+    ↓
+Training (src/train.py: surrogate gradients OR STDP)
+    ↓
+Model Checkpoint (models/best_model.pt)
+    ↓
+Inference (src/inference.py)
+    ↓
+Demo UI (demo/app.py: Flask server)
 ```
+
+**Key Architecture Insight**: The project uses a two-phase learning strategy:
+- **Phase 1 (MVP)**: Pure surrogate gradient backpropagation for fast convergence
+- **Phase 2 (Enhancement)**: Hybrid STDP (layer 1) + backprop (layer 2) for biological plausibility
 
 ### Critical SNN Patterns
 
@@ -113,18 +125,29 @@ spike_grad = surrogate.fast_sigmoid()
 lif = snn.Leaky(beta=0.9, spike_grad=spike_grad)
 ```
 
-### snnTorch Gotchas
+### snnTorch Critical Gotchas
 
-**State Device Mismatch**
+**State Device Mismatch** (most common error)
 ```python
 model.to(device)
-mem = lif.init_leaky().to(device)  # State must match model device!
+mem = lif.init_leaky().to(device)  # State MUST match model device!
+# Symptom: "Expected all tensors to be on the same device"
+```
+
+**State Initialization** (second most common)
+```python
+# MUST call before EVERY forward pass (not just once)
+def forward(self, x):
+    mem1 = self.lif1.init_leaky()  # Initialize here!
+    for t in range(x.size(0)):
+        cur = self.fc1(x[t])
+        spk, mem1 = self.lif1(cur, mem1)
 ```
 
 **No Time Parallelization**
 ```python
 # Must iterate sequentially over time dimension
-for step in range(x.size(0)):  # Cannot parallelize
+for step in range(x.size(0)):  # Cannot parallelize across time
     cur = self.fc1(x[step])
     spk, mem = self.lif1(cur, mem)
 ```
@@ -139,7 +162,16 @@ checkpoint = {
     'val_acc': val_acc,
     'val_loss': val_loss
 }
-# inference.py:load_model() handles both checkpoint dict and raw state_dict
+# inference.py:load_model() handles BOTH checkpoint dict and raw state_dict
+```
+
+**Reproducibility Trap**
+```python
+# rate_encode() is stochastic - call set_seed() BEFORE each encoding
+# Otherwise: same input signal → different spike trains every time
+from src.utils import set_seed
+set_seed(42)  # Must be called before EACH encoding for reproducibility
+spikes = rate_encode(signal, num_steps=100)
 ```
 
 ## Configuration
@@ -201,6 +233,19 @@ checkpoint = {
 - After training: `models/best_model.pt`, `results/metrics/training_history.json`
 - After demo: Flask server on port 5000
 
+### Utility Scripts (scripts/)
+
+**Analysis & Debugging**:
+- `analyze_dataset_quality.py` - Validate dataset distribution, check for class imbalance
+- `evaluate_test_set.py` - Comprehensive test set evaluation with clinical metrics
+- `comprehensive_verification.py` - Full pipeline verification from data to inference
+- `code_review.py` - Static analysis and code quality checks
+
+**Testing**:
+- `test_inference.py` - Test model loading and prediction functions
+- `test_flask_demo.py` - Test Flask endpoints and API responses
+- `train_snn_mvp.py` - Standalone SNN training script (alternative to 03_train_mvp_model.sh)
+
 ### Development Philosophy
 
 **Hackathon MVP Approach** (from `context/ENHANCED_STRUCTURE.md`):
@@ -227,73 +272,235 @@ checkpoint = {
 
 **Workflow**: Prototype in notebooks → Move working code to `src/` → Integrate with scripts → Deploy to demo
 
+## Common Development Patterns
+
+### Adding a New Disease Class
+
+1. Update `src/data.py:generate_synthetic_ecg()` with new condition parameters
+2. Modify `scripts/02_generate_mvp_data.sh` to generate new class data
+3. Update `src/model.py:SimpleSNN` output_size if needed
+4. Retrain model with `make train`
+5. Update `demo/app.py` class labels for display
+
+### Debugging Training Issues
+
+**Check data quality first**:
+```bash
+python scripts/analyze_dataset_quality.py
+# Look for: class imbalance, signal quality, spike encoding statistics
+```
+
+**Profile inference performance**:
+```python
+from src.inference import profile_inference
+times, memory = profile_inference(model, test_signal, device='cuda')
+```
+
+**Visualize spike patterns**:
+```bash
+# Use demo endpoint to see neuron firing patterns
+curl -X POST http://localhost:5000/api/visualize_spikes -d '{"signal": [...]}'
+```
+
+### Testing Individual Components
+
+```bash
+# Test data generation only
+python -c "from src.data import generate_synthetic_ecg; print(generate_synthetic_ecg(n_samples=10).shape)"
+
+# Test model forward pass
+python -c "from src.model import SimpleSNN; import torch; m = SimpleSNN(); x = torch.randn(100, 1, 2500); print(m(x)[0].shape)"
+
+# Test spike encoding
+python -c "from src.data import rate_encode; import numpy as np; s = np.random.rand(2500); print(rate_encode(s, num_steps=100).shape)"
+
+# Verify model checkpoint
+python scripts/test_inference.py
+```
+
 ## Common Issues
 
+### Memory Issues
+
 **CUDA Out of Memory**
-- Reduce `BATCH_SIZE` in `.env` (try 16 for 4GB VRAM, 8 if still failing)
-- SNNs process sequential time steps → higher memory than ANNs
+```bash
+# Quick fix: reduce batch size
+BATCH_SIZE=16 python src/train.py  # Try 16, then 8 if still failing
+```
+- SNNs use more memory than ANNs due to sequential time step processing
+- Memory usage: `batch_size × time_steps × hidden_size × 4 bytes`
+- Reduce `num_steps` in spike encoding (100 → 50) as last resort
 
-**Model Not Converging**
-- Adjust `LEARNING_RATE` (try 0.01 or 0.0001)
-- Check spike encoding gain (default 10.0, range 1.0-20.0)
-- Verify surrogate gradient function (fast_sigmoid recommended)
+**CPU Memory Issues**
+```bash
+# Monitor memory during training
+watch -n 1 'free -h'
+# Reduce dataset size in scripts/02_generate_mvp_data.sh if needed
+```
 
-**Spike Encoding Issues**
-- All 1s: `gain` too high → reduce to 5.0-10.0
-- All 0s: `gain` too low → increase to 10.0-15.0
-- Verify input signal normalized to [0, 1] range
+### Training Issues
+
+**Model Not Converging (loss not decreasing)**
+1. Check data quality: `python scripts/analyze_dataset_quality.py`
+2. Verify spike encoding is working:
+   ```python
+   # Should see mix of 0s and 1s, not all 0s or all 1s
+   from src.data import rate_encode
+   spikes = rate_encode(signal, num_steps=100, gain=10.0)
+   print(f"Spike rate: {spikes.mean():.2f}")  # Should be 0.05-0.30
+   ```
+3. Adjust learning rate: try `0.01` or `0.0001` instead of `0.001`
+4. Change surrogate gradient: `fast_sigmoid` → `sigmoid` or `atan`
+
+**Spike Encoding Produces All 0s or All 1s**
+```python
+# All 1s: gain too high
+spikes = rate_encode(signal, num_steps=100, gain=5.0)  # Reduce from 10.0
+
+# All 0s: gain too low OR signal not normalized
+signal = (signal - signal.min()) / (signal.max() - signal.min())  # Normalize to [0,1]
+spikes = rate_encode(signal, num_steps=100, gain=15.0)  # Increase from 10.0
+```
 
 **Non-Reproducible Results**
-- `rate_encode()` is stochastic (Poisson process)
-- Call `set_seed(42)` before encoding
+```python
+# rate_encode() uses Poisson process (stochastic)
+# MUST call set_seed() before EACH encoding
+from src.utils import set_seed
+set_seed(42)
+spikes = rate_encode(signal)  # Now reproducible
+```
 
-**SNN State Initialization Error**
-- Forgot to initialize: `mem = lif.init_leaky()`
-- Must call before forward pass
+### Model Loading Issues
 
-**Device Mismatch**
-- Model on GPU, state on CPU (or vice versa)
-- Solution: `mem = lif.init_leaky().to(device)`
+**RuntimeError: Expected all tensors to be on the same device**
+```python
+# Solution 1: Initialize state on correct device
+model.to(device)
+mem = lif.init_leaky().to(device)  # Don't forget .to(device)!
 
-**Training Script Uses Baseline ANN**
-- `scripts/03_train_mvp_model.sh` uses ANN by default (intentional for MVP)
-- To use SimpleSNN: modify script to import from `src.model`
+# Solution 2: Move everything at once
+model = model.to(device)
+x = x.to(device)
+mem = lif.init_leaky().to(device)
+```
 
-**Demo Returns Mock Predictions**
-- Expected for MVP - SNN integration is TODO in `demo/app.py`
+**State Initialization Error**
+```python
+# WRONG: Initializing outside forward pass
+mem = self.lif.init_leaky()  # Only called once
+def forward(self, x):
+    spk, mem = self.lif(cur, mem)  # mem may be stale
+
+# CORRECT: Initialize inside forward pass
+def forward(self, x):
+    mem = self.lif.init_leaky()  # Fresh state every forward pass
+    spk, mem = self.lif(cur, mem)
+```
+
+**Checkpoint Loading Fails**
+```python
+# inference.py:load_model() handles both formats automatically
+# If still fails, check manually:
+checkpoint = torch.load(model_path)
+if 'model_state_dict' in checkpoint:
+    model.load_state_dict(checkpoint['model_state_dict'])
+else:
+    model.load_state_dict(checkpoint)
+```
+
+### Environment Issues
 
 **Import Errors After Installation**
-- Verify venv activated: `which python` should show venv path
-- Reinstall: `pip install -r requirements.txt --force-reinstall`
-- For CUDA: `pip install torch --index-url https://download.pytorch.org/whl/cu121`
+```bash
+# 1. Verify venv is activated
+which python  # Should show venv path, not system python
 
-**STDP Issues**
-- See `docs/STDP_GUIDE.md` for detailed troubleshooting
-- Common: weights saturate, learning too slow, no spike coincidences, memory issues
+# 2. Reinstall dependencies
+pip install -r requirements.txt --force-reinstall
+
+# 3. For CUDA issues (Linux/Windows)
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+```
+
+**Demo Not Loading / Returns Mock Predictions**
+- Check model exists: `ls -lh models/best_model.pt`
+- Verify Flask is running: `curl http://localhost:5000/health`
+- Mock predictions are intentional for MVP (TODO: integrate real SNN)
+
+**Scripts Fail with "No such file or directory"**
+```bash
+# Always run scripts from project root
+cd /path/to/cortexcore
+bash scripts/01_setup_environment.sh  # ✓ Correct
+cd scripts && bash 01_setup_environment.sh  # ✗ Wrong
+```
 
 ## Context & Documentation
 
-### Context Directory (`context/`)
+### Documentation Organization Strategy
 
-- `PS.txt` - Original problem statement, requirements
-- `STRUCTURE.md` - Complete ideal project structure
-- `ENHANCED_STRUCTURE.md` - **MVP-focused simplified structure** (recommended)
-- `ROADMAP.md` - Detailed 30-day development roadmap
-- `ENHANCED_ROADMAP.md` - **AI-assisted rapid development** (recommended)
-- `INTEGRATION.md` - Module integration timeline
-- `ENHANCED_INTEGRATION.md` - **Simplified MVP integration** (recommended)
+The project has **two documentation tracks**:
+1. **ENHANCED_* files** - MVP-first, rapid development, hackathon-focused (Days 1-7)
+2. **Original files** - Comprehensive, production-ready, detailed planning (Days 8-30)
 
-### Documentation (`docs/`)
+### When to Use Each Track
 
-- `STDP_GUIDE.md` - **Full STDP implementation guide** (biological plausibility requirement)
-- `CODE_EXAMPLES.md` - Common coding patterns and snippets
+**Use ENHANCED (MVP-focused) docs when:**
+- ✅ Working on MVP features (Days 1-7)
+- ✅ Need quick implementation guidance
+- ✅ Time-constrained or hackathon mode
+- ✅ Building proof-of-concept
+- ✅ User asks for "quick" or "MVP" approach
+- ✅ Starting new features from scratch
 
-**When to refer:**
-- Starting features → `ENHANCED_STRUCTURE.md`
-- Planning sprints → `ENHANCED_ROADMAP.md`
-- Understanding requirements → `PS.txt`
-- STDP implementation → `docs/STDP_GUIDE.md`
-- Code patterns → `docs/CODE_EXAMPLES.md`
+**Use Original (Comprehensive) docs when:**
+- 📋 Planning production deployment (Days 15-30)
+- 📋 Need detailed team coordination workflows
+- 📋 Understanding complete system architecture
+- 📋 Long-term feature planning with dependencies
+- 📋 User asks for "production-ready" or "comprehensive" approach
+- 📋 Scaling beyond MVP to multi-disease/multi-signal support
+
+### Document Mapping
+
+| Purpose | MVP Track (Use First) | Comprehensive Track (Use for Production) |
+|---------|----------------------|----------------------------------------|
+| Project structure | `context/ENHANCED_STRUCTURE.md` ⭐ | `context/STRUCTURE.md` |
+| Development roadmap | `context/ENHANCED_ROADMAP.md` ⭐ | `context/ROADMAP.md` |
+| Team integration & handoffs | `context/ENHANCED_INTEGRATION.md` ⭐ | `context/INTEGRATION.md` |
+
+### Critical Documents (Always Relevant)
+
+- `context/PS.txt` - Original problem statement and requirements (**source of truth**)
+- `docs/STDP_GUIDE.md` - Full STDP implementation guide (**biological plausibility requirement**)
+- `docs/CODE_EXAMPLES.md` - Common SNN coding patterns and snippets
+- `docs/MIGRATION_SUMMARY.md` - Migration history and architectural decisions
+
+### Quick Reference Decision Tree
+
+```
+Need to implement a feature?
+│
+├─ Is this MVP (Days 1-7) or new rapid feature?
+│  └─ YES → Read context/ENHANCED_STRUCTURE.md
+│           and context/ENHANCED_INTEGRATION.md
+│
+├─ Is this production enhancement (Days 15-30)?
+│  └─ YES → Read context/INTEGRATION.md
+│           and context/ROADMAP.md
+│
+├─ Need to understand original requirements?
+│  └─ ALWAYS → Read context/PS.txt
+│
+├─ Implementing STDP learning?
+│  └─ ALWAYS → Read docs/STDP_GUIDE.md
+│
+└─ Looking for code patterns/examples?
+   └─ ALWAYS → Read docs/CODE_EXAMPLES.md
+```
+
+**Default Approach**: When in doubt, start with **ENHANCED_* docs** for faster iteration, then consult comprehensive docs only if needed for production scaling.
 
 ## STDP Requirement
 
@@ -351,6 +558,13 @@ Console commands (defined but not implemented - use scripts instead):
 
 ALWAYS VERIFY THE CODEBASE FOR MISSING INFORMATION CRTICAL FOR PROJECT DEVELOPMENT.
 ASK THE USER TO PROVIDE YOU WITH THE INFORMATION IF NECESSARY FOR BEST RESULTS.
+
+## Git Commit Instructions
+
+always check if the files being staged or the files which are being committed are supposed to be committed or ignored.
+make sure you don't commit any files which are supposed to be kept local and not pushed to the repo.
+
+never include your name in the commit messages and always avoid mentioning the use of AI.
 
 ## Frontend Development
 
