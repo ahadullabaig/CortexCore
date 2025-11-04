@@ -240,6 +240,10 @@ resources/presentations/*.key
 # Use .gitkeep files to track empty directories
 # Example: echo "" > data/synthetic/.gitkeep
 
-#Output Documentation
+#Output Documentation (auto-generated, user can regenerate)
 NEXT_STEPS.md
 PHASE_1_SUCCESS_DOCUMENTATION.md
+
+# IMPORTANT: Keep debugging and investigation reports (these document critical fixes)
+# DEBUG_REPORT_100_PERCENT_ACCURACY.md
+# FINAL_EXECUTIVE_SUMMARY.md

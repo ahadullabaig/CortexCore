@@ -24,9 +24,12 @@ if [ -f ".env" ]; then
 fi
 
 # Set defaults if not in .env
-NUM_TRAIN_SAMPLES=${NUM_TRAIN_SAMPLES:-1000}
-NUM_VAL_SAMPLES=${NUM_VAL_SAMPLES:-200}
-NUM_TEST_SAMPLES=${NUM_TEST_SAMPLES:-200}
+# UPDATED (2025-11-04): Increased dataset size to improve params-to-samples ratio
+# Previous: 1000/200/200 = 320:1 ratio (320K params / 1K samples)
+# New: 5000/1000/1000 = 64:1 ratio (still high but much better)
+NUM_TRAIN_SAMPLES=${NUM_TRAIN_SAMPLES:-5000}
+NUM_VAL_SAMPLES=${NUM_VAL_SAMPLES:-1000}
+NUM_TEST_SAMPLES=${NUM_TEST_SAMPLES:-1000}
 SIGNAL_DURATION=${SIGNAL_DURATION:-10}
 SAMPLING_RATE=${SAMPLING_RATE:-250}
 
@@ -75,42 +78,79 @@ import json
 from pathlib import Path
 
 # Configuration from environment
-NUM_TRAIN = int(os.getenv('NUM_TRAIN_SAMPLES', 1000))
-NUM_VAL = int(os.getenv('NUM_VAL_SAMPLES', 200))
-NUM_TEST = int(os.getenv('NUM_TEST_SAMPLES', 200))
+# UPDATED (2025-11-04): Match increased dataset sizes
+NUM_TRAIN = int(os.getenv('NUM_TRAIN_SAMPLES', 5000))
+NUM_VAL = int(os.getenv('NUM_VAL_SAMPLES', 1000))
+NUM_TEST = int(os.getenv('NUM_TEST_SAMPLES', 1000))
 DURATION = int(os.getenv('SIGNAL_DURATION', 10))
 SAMPLING_RATE = int(os.getenv('SAMPLING_RATE', 250))
+
+# Set random seeds for reproducibility (ADDED 2025-11-04)
+SEED = 42
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+print(f"🎲 Random seed set to: {SEED}")
 
 # Output paths
 DATA_DIR = Path('data/synthetic')
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 def generate_ecg_sample(condition='normal', duration=10, sampling_rate=250):
-    """Generate synthetic ECG signal"""
+    """
+    Generate synthetic ECG signal with realistic variability.
+
+    FIXED VERSION (2025-11-04): Added realistic intra-class variability
+    to prevent perfect class separation and trivial classification.
+    """
     try:
         if condition == 'normal':
-            # Normal ECG
+            # Normal ECG with realistic variability
+            # Healthy hearts: 60-100 BPM (resting)
+            heart_rate = np.random.randint(60, 101)  # Random within normal range
+            noise = np.random.uniform(0.03, 0.08)     # Variable noise level
+
             ecg = nk.ecg_simulate(
                 duration=duration,
                 sampling_rate=sampling_rate,
-                heart_rate=70,
-                noise=0.05
+                heart_rate=heart_rate,
+                noise=noise
             )
+
         elif condition == 'arrhythmia':
-            # Arrhythmia (irregular heart rate)
+            # Arrhythmia with multiple types for realism
+            # 40% Bradycardia (slow): 40-60 BPM
+            # 60% Tachycardia (fast): 100-180 BPM
+            # This creates overlap with normal range (60-100)
+
+            arrhythmia_type = np.random.choice(['bradycardia', 'tachycardia'], p=[0.4, 0.6])
+
+            if arrhythmia_type == 'bradycardia':
+                # Slow heart rate - overlaps with low-normal range
+                heart_rate = np.random.randint(40, 71)  # 40-70 BPM
+            else:  # tachycardia
+                # Fast heart rate - overlaps with high-normal range
+                heart_rate = np.random.randint(90, 181)  # 90-180 BPM
+
+            noise = np.random.uniform(0.05, 0.12)  # Variable noise
+
             ecg = nk.ecg_simulate(
                 duration=duration,
                 sampling_rate=sampling_rate,
-                heart_rate=120,
-                noise=0.1
+                heart_rate=heart_rate,
+                noise=noise
             )
-            # Add irregularities
-            irregularities = np.random.normal(0, 0.2, len(ecg))
-            ecg = ecg + irregularities
+
+            # Add realistic irregularities (variable amplitude, not fixed)
+            # Only for tachycardia to simulate irregular rapid heartbeat
+            if arrhythmia_type == 'tachycardia':
+                irregularity_strength = np.random.uniform(0.1, 0.3)
+                irregularities = np.random.normal(0, irregularity_strength, len(ecg))
+                ecg = ecg + irregularities
+
         else:
             raise ValueError(f"Unknown condition: {condition}")
 
-        # Normalize
+        # Normalize to zero mean, unit variance
         ecg = (ecg - np.mean(ecg)) / (np.std(ecg) + 1e-8)
 
         return ecg
