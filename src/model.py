@@ -18,7 +18,7 @@ import torch.nn as nn
 import snntorch as snn
 from snntorch import surrogate
 from snntorch import functional as SF
-from typing import Optional, Tuple, Any
+from typing import Optional, Tuple, Any, Dict
 
 # ============================================
 # TODO: Day 2-3 - Basic SNN Model
@@ -105,6 +105,246 @@ class SimpleSNN(nn.Module):
             mem2_rec.append(mem2)
 
         return torch.stack(spk2_rec), torch.stack(mem2_rec)
+
+
+# ============================================
+# Hybrid STDP-SNN Architecture (Phase 2)
+# ============================================
+
+class HybridSTDP_SNN(SimpleSNN):
+    """
+    Hybrid SNN with STDP learning for layer 1 and backprop for layer 2
+
+    This implements the biologically-plausible three-phase training strategy:
+    - Phase 1 (Epochs 1-20): Pure STDP on layer 1 (unsupervised feature learning)
+    - Phase 2 (Epochs 21-50): STDP frozen, backprop on layer 2 (supervised classification)
+    - Phase 3 (Epochs 51-70): Fine-tuning with backprop on all layers
+
+    Architecture:
+        Input → FC1 + LIF1 (STDP-capable) → FC2 + LIF2 (backprop) → Output
+
+    Key Features:
+        - Returns intermediate spike trains for STDP updates
+        - Supports homeostatic plasticity (prevents weight saturation)
+        - Supports multi-timescale STDP (fast/slow learning)
+        - Compatible with existing training infrastructure
+
+    Usage:
+        from src.stdp import STDPConfig, MultiTimescaleSTDP
+
+        config = STDPConfig(use_homeostasis=True, use_multiscale=True)
+        model = HybridSTDP_SNN(config=config)
+
+        # Phase 1: STDP training
+        model.set_stdp_mode(True)
+        # ... training loop calls model.apply_stdp_to_layer1()
+
+        # Phase 2: Hybrid training
+        model.freeze_layer1()
+        model.set_stdp_mode(False)
+        # ... backprop training on layer 2
+
+        # Phase 3: Fine-tuning
+        model.unfreeze_layer1()
+        # ... full backprop training
+    """
+
+    def __init__(
+        self,
+        input_size: int = 2500,
+        hidden_size: int = 128,
+        output_size: int = 2,
+        beta: float = 0.9,
+        spike_grad: Optional[Any] = None,
+        config: Optional['STDPConfig'] = None
+    ):
+        """
+        Args:
+            input_size: Input feature dimension
+            hidden_size: Hidden layer size
+            output_size: Number of classes
+            beta: Membrane potential decay rate
+            spike_grad: Surrogate gradient function
+            config: STDP configuration (from src.stdp import STDPConfig)
+        """
+        super().__init__(input_size, hidden_size, output_size, beta, spike_grad)
+
+        # STDP configuration and layer
+        if config is not None:
+            from src.stdp import MultiTimescaleSTDP
+            self.stdp_layer = MultiTimescaleSTDP(
+                input_size=input_size,
+                output_size=hidden_size,
+                config=config
+            )
+            self.config = config
+        else:
+            self.stdp_layer = None
+            self.config = None
+
+        # Training mode flags
+        self.stdp_mode = False  # If True, use STDP for layer 1
+        self.layer1_frozen = False  # If True, layer 1 weights frozen
+
+        # Spike history tracking (for STDP)
+        self.register_buffer('_input_spikes', None)
+        self.register_buffer('_hidden_spikes', None)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        return_intermediate: bool = False
+    ) -> Tuple[torch.Tensor, torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+        """
+        Forward pass with optional intermediate spike tracking
+
+        Args:
+            x: Input tensor [time_steps, batch, features]
+            return_intermediate: If True, return input and hidden spikes for STDP
+
+        Returns:
+            spikes: Output spikes [time_steps, batch, output_size]
+            membrane: Membrane potentials [time_steps, batch, output_size]
+            intermediate: Optional tuple (input_spikes, hidden_spikes) for STDP
+        """
+        # Ensure correct dimension order: [time_steps, batch, features]
+        if len(x.shape) == 3 and x.shape[0] < x.shape[1]:
+            x = x.transpose(0, 1)
+
+        # Initialize hidden states
+        mem1 = self.lif1.init_leaky()
+        mem2 = self.lif2.init_leaky()
+
+        # Record outputs
+        spk1_rec = []  # Hidden layer spikes (for STDP)
+        spk2_rec = []  # Output spikes
+        mem2_rec = []  # Output membrane potentials
+
+        # Process each time step
+        for step in range(x.size(0)):
+            cur1 = self.fc1(x[step])
+            spk1, mem1 = self.lif1(cur1, mem1)
+
+            cur2 = self.fc2(spk1)
+            spk2, mem2 = self.lif2(cur2, mem2)
+
+            spk1_rec.append(spk1)
+            spk2_rec.append(spk2)
+            mem2_rec.append(mem2)
+
+        # Stack recordings
+        spk2_stacked = torch.stack(spk2_rec)
+        mem2_stacked = torch.stack(mem2_rec)
+
+        if return_intermediate or self.stdp_mode:
+            spk1_stacked = torch.stack(spk1_rec)
+            # Store for STDP update (input is the raw signal, not spikes)
+            # For rate encoding, x is already spike-encoded
+            self._input_spikes = x.detach()  # [time_steps, batch, input_size]
+            self._hidden_spikes = spk1_stacked.detach()  # [time_steps, batch, hidden_size]
+
+            return spk2_stacked, mem2_stacked, (self._input_spikes, self._hidden_spikes)
+        else:
+            return spk2_stacked, mem2_stacked, None
+
+    def apply_stdp_to_layer1(
+        self,
+        learning_rate_scale: float = 1.0,
+        epoch: int = 0,
+        max_epochs: int = 70
+    ) -> Optional[Dict[str, float]]:
+        """
+        Apply STDP weight update to layer 1 (fc1)
+
+        This should be called after forward pass when in STDP mode.
+        The forward pass must have been called with return_intermediate=True.
+
+        Args:
+            learning_rate_scale: Global learning rate multiplier
+            epoch: Current epoch (for multi-timescale alpha annealing)
+            max_epochs: Total epochs (for annealing)
+
+        Returns:
+            stats: STDP update statistics (LTP/LTD events, weight changes, etc.)
+                   Returns None if STDP layer not initialized or no spikes stored
+        """
+        if self.stdp_layer is None:
+            raise RuntimeError("STDP layer not initialized. Pass config to __init__.")
+
+        if self._input_spikes is None or self._hidden_spikes is None:
+            raise RuntimeError(
+                "No spike history available. Call forward() with return_intermediate=True first."
+            )
+
+        # Apply STDP to fc1 weights
+        current_weights = self.fc1.weight.data  # [hidden_size, input_size]
+
+        new_weights, stats = self.stdp_layer.apply_stdp(
+            pre_spikes=self._input_spikes,
+            post_spikes=self._hidden_spikes,
+            weights=current_weights,
+            learning_rate_scale=learning_rate_scale,
+            epoch=epoch,
+            max_epochs=max_epochs
+        )
+
+        # Update fc1 weights (no_grad since STDP is not part of autograd)
+        with torch.no_grad():
+            self.fc1.weight.copy_(new_weights)
+
+        # Clear spike history to prevent memory leaks
+        self._input_spikes = None
+        self._hidden_spikes = None
+
+        return stats
+
+    def set_stdp_mode(self, enabled: bool):
+        """
+        Enable/disable STDP mode
+
+        When enabled, forward() automatically returns intermediate spikes.
+        """
+        self.stdp_mode = enabled
+
+    def freeze_layer1(self):
+        """
+        Freeze layer 1 weights (for Phase 2: backprop only on layer 2)
+
+        This prevents backpropagation from updating STDP-learned features.
+        """
+        for param in self.fc1.parameters():
+            param.requires_grad = False
+
+        # LIF1 has no learnable parameters, so no need to freeze
+        self.layer1_frozen = True
+        print("✅ Layer 1 (fc1) frozen - STDP weights preserved")
+
+    def unfreeze_layer1(self):
+        """
+        Unfreeze layer 1 weights (for Phase 3: full fine-tuning)
+        """
+        for param in self.fc1.parameters():
+            param.requires_grad = True
+
+        self.layer1_frozen = False
+        print("✅ Layer 1 (fc1) unfrozen - ready for fine-tuning")
+
+    def get_stdp_statistics(self) -> Optional[Dict[str, float]]:
+        """
+        Get cumulative STDP statistics
+
+        Returns:
+            stats: Dictionary with LTP/LTD events, weight changes, etc.
+        """
+        if self.stdp_layer is not None:
+            return self.stdp_layer.get_statistics()
+        else:
+            return None
+
+    def reset_stdp_statistics(self):
+        """Reset STDP cumulative statistics"""
+        if self.stdp_layer is not None:
+            self.stdp_layer.reset_statistics()
 
 
 # ============================================

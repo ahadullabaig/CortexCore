@@ -30,7 +30,8 @@ try:
     from src.inference import load_model, predict
     from src.data import rate_encode
     from src.utils import get_device
-    from src.model import SimpleSNN
+    from src.model import SimpleSNN, HybridSTDP_SNN
+    from src.stdp import STDPConfig
 except ImportError as e:
     print(f"⚠️  Warning: src modules not fully implemented yet: {e}")
 
@@ -42,7 +43,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for API access
 
 # Load configuration
-MODEL_PATH = os.getenv('MODEL_PATH', 'models/best_model.pt')
+MODEL_PATH = os.getenv('MODEL_PATH', 'models/stdp_full/best_finetuned_model.pt')
 DEVICE = os.getenv('DEVICE', 'cuda' if torch.cuda.is_available() else 'cpu')
 DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
 
@@ -60,7 +61,7 @@ def init_model():
 
     if Path(MODEL_PATH).exists():
         try:
-            # Load SimpleSNN model
+            # Load checkpoint
             checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
 
             # Get model config from checkpoint
@@ -68,31 +69,78 @@ def init_model():
             input_size = config.get('input_size', 2500)
             hidden_size = config.get('hidden_size', 128)
 
-            # Create model instance
-            model = SimpleSNN(
-                input_size=input_size,
-                hidden_size=hidden_size,
-                output_size=2
-            )
+            # Detect model type (STDP or SimpleSNN)
+            # STDP models have 'stdp_statistics' or 'stdp' in path
+            has_stdp_stats = 'stdp_statistics' in checkpoint
+            has_stdp_path = 'stdp' in MODEL_PATH.lower()
+            is_stdp_model = has_stdp_stats or has_stdp_path
+            model_type = 'HybridSTDP_SNN' if is_stdp_model else 'SimpleSNN'
 
-            # Load weights using the inference module
-            model = load_model(MODEL_PATH, model, device=DEVICE)
+            print(f"🔍 Model Detection:")
+            print(f"   Has stdp_statistics: {has_stdp_stats}")
+            print(f"   Has 'stdp' in path: {has_stdp_path}")
+            print(f"   Is STDP model: {is_stdp_model}")
+            print(f"   Model type: {model_type}")
+
+            # Create model instance
+            if is_stdp_model:
+                print(f"🧠 Loading STDP model...")
+                # Create STDP config
+                stdp_config = STDPConfig(
+                    use_homeostasis=True,
+                    target_rate=10.0,
+                    use_multiscale=True,
+                    tau_fast=10.0,
+                    tau_slow=100.0,
+                    alpha_initial=0.8,
+                    alpha_final=0.3
+                )
+                model = HybridSTDP_SNN(
+                    input_size=input_size,
+                    hidden_size=hidden_size,
+                    output_size=2,
+                    config=stdp_config
+                )
+            else:
+                print(f"🧠 Loading SimpleSNN model...")
+                model = SimpleSNN(
+                    input_size=input_size,
+                    hidden_size=hidden_size,
+                    output_size=2
+                )
+
+            # Load weights
+            model.load_state_dict(checkpoint['model_state_dict'])
+            model.to(DEVICE)
+            model.eval()
+
+            # Get validation accuracy from checkpoint
+            if 'metrics' in checkpoint:
+                val_acc = checkpoint['metrics'].get('val_accuracy', 'N/A')
+            else:
+                val_acc = checkpoint.get('val_acc', checkpoint.get('val_accuracy', 'N/A'))
 
             model_info = {
                 'loaded': True,
+                'model_type': model_type,
                 'path': MODEL_PATH,
                 'device': DEVICE,
-                'val_acc': checkpoint.get('val_acc', 'N/A'),
+                'val_acc': val_acc,
                 'epoch': checkpoint.get('epoch', 'N/A'),
                 'input_size': input_size,
                 'hidden_size': hidden_size,
-                'parameters': sum(p.numel() for p in model.parameters())
+                'parameters': sum(p.numel() for p in model.parameters()),
+                'stdp_enabled': is_stdp_model
             }
             print(f"✅ Model loaded from {MODEL_PATH}")
+            print(f"   Type: {model_type}")
             print(f"   Validation accuracy: {model_info['val_acc']}")
             print(f"   Parameters: {model_info['parameters']:,}")
+            print(f"   STDP features: {is_stdp_model}")
         except Exception as e:
             print(f"⚠️  Error loading model: {e}")
+            import traceback
+            traceback.print_exc()
             model_info = {'loaded': False, 'error': str(e)}
     else:
         print(f"⚠️  Model not found at {MODEL_PATH}")

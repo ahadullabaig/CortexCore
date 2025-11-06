@@ -104,9 +104,14 @@ def predict(
     with torch.no_grad():
         output = model(input_data)
 
-        # Handle SNN-specific output (spikes + membrane)
+        # Handle SNN-specific output (spikes + membrane + optional intermediate)
         if isinstance(output, tuple):
-            spikes, membrane = output
+            if len(output) == 3:
+                # HybridSTDP_SNN: (spikes, membrane, intermediate)
+                spikes, membrane, intermediate = output
+            else:
+                # SimpleSNN: (spikes, membrane)
+                spikes, membrane = output
             # Use spike counts for prediction
             output = spikes.sum(dim=0)  # Sum over time: [batch, classes]
             spike_count = spikes.sum().item()

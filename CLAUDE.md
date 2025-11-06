@@ -598,3 +598,41 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 Vary between light and dark themes, different fonts, different aesthetics.
 You still tend to converge on common choices (Space Grotesk, for example) across generations.
 Avoid this: it is critical that you think outside the box!
+
+---
+
+## Key Lessons Learned from Phase 1 Implementation
+
+### For Machine Learning Research
+
+1. **Always Validate Data Quality First**
+   - Perfect accuracy is a red flag, not success
+   - Test with simple baselines before complex models
+   - Verify class distributions have realistic overlap
+
+2. **Synthetic Data Requires Careful Design**
+   - Add realistic intra-class variability
+   - Ensure overlapping distributions
+   - Model real-world complexity and edge cases
+
+3. **Model Capacity vs Task Complexity**
+   - 320K parameters for binary classification is powerful
+   - Need sufficient dataset size (5K+ samples recommended)
+   - Parameters-to-samples ratio matters (aim for <100:1)
+
+4. **Baseline Comparisons Are Critical**
+   - If decision tree (depth=1) gets >95%, task is too easy
+   - If linear classifier gets >95%, task is linearly separable
+   - Simple baselines reveal data quality issues early
+
+### For SNN Development
+
+5. **SNNs Are Powerful**
+   - SimpleSNN (320K params) can learn complex patterns
+   - 89% test accuracy on overlapping distributions proves capability
+   - Model architecture was correct from the start
+
+6. **Energy Efficiency Claims Require Realistic Tasks**
+   - Can't claim SNN superiority on trivial tasks
+   - Need challenging datasets to validate neuromorphic advantages
+   - Phase 2 should use real-world data (MIT-BIH, PTB-XL)

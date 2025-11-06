@@ -222,7 +222,7 @@ resources/presentations/*.key
 # Example: echo "" > data/synthetic/.gitkeep
 
 #Output Documentation (auto-generated, user can regenerate)
+FINAL_EXECUTIVE_SUMMARY.md
 NEXT_STEPS.md
 PHASE_1_SUCCESS_DOCUMENTATION.md
-DEBUG_REPORT_100_PERCENT_ACCURACY.md
-FINAL_EXECUTIVE_SUMMARY.md
+STDP_IMPLEMENTATION_REPORT.md
