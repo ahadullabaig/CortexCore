@@ -194,10 +194,12 @@ def api_predict():
     }
     """
     try:
-        if model is None:
+        # Strengthen model validation
+        if model is None or not model_info.get('loaded', False):
             return jsonify({
                 'error': 'Model not loaded',
-                'details': model_info.get('error', 'Unknown error')
+                'details': model_info.get('error', 'Unknown error'),
+                'suggestion': 'Please check server logs and retrain model if necessary'
             }), 503
 
         data = request.json
@@ -281,10 +283,12 @@ def api_visualize_spikes():
     Returns spike raster data for visualization
     """
     try:
-        if model is None:
+        # Strengthen model validation
+        if model is None or not model_info.get('loaded', False):
             return jsonify({
                 'error': 'Model not loaded',
-                'details': model_info.get('error', 'Unknown error')
+                'details': model_info.get('error', 'Unknown error'),
+                'suggestion': 'Please check server logs and retrain model if necessary'
             }), 503
 
         data = request.json
@@ -298,34 +302,26 @@ def api_visualize_spikes():
                 'error': f'Signal must be 2500 samples, got {len(signal)}'
             }), 400
 
-        # Convert to tensor
-        signal_tensor = torch.FloatTensor(signal)
+        # Create 2D spike encoding for visualization
+        # Normalize signal to [0, 1]
+        signal_norm = (signal - signal.min()) / (signal.max() - signal.min() + 1e-8)
 
-        # Normalize signal to [0, 1] range
-        signal_min = signal_tensor.min()
-        signal_max = signal_tensor.max()
-        if signal_max > signal_min:
-            signal_normalized = (signal_tensor - signal_min) / (signal_max - signal_min)
-        else:
-            signal_normalized = torch.zeros_like(signal_tensor)
-
-        # Generate spike representation: replicate signal across time steps
+        # Replicate normalized signal across time steps and apply Poisson encoding
         # Shape: [num_steps, signal_length]
-        spike_array = signal_normalized.unsqueeze(0).repeat(num_steps, 1).numpy()
+        spike_array = np.random.rand(num_steps, len(signal)) < (signal_norm * gain / 100.0)
+        spike_array = spike_array.astype(np.float32)
 
-        # Apply threshold to convert to binary spikes (for visualization)
-        # Use gain as threshold sensitivity
-        spike_threshold = 1.0 / gain
-        spike_array = (spike_array > spike_threshold).astype(float)
-
-        # Sample neurons for visualization
+        # Sample neurons for visualization (display subset for performance)
         num_neurons_to_show = min(128, spike_array.shape[1])
+        stride = max(1, spike_array.shape[1] // num_neurons_to_show)
 
         spike_times = []
         neuron_ids = []
 
-        # Extract spike times for each neuron
-        for neuron_idx in range(num_neurons_to_show):
+        # Extract spike times for sampled neurons
+        for idx, neuron_idx in enumerate(range(0, spike_array.shape[1], stride)):
+            if idx >= num_neurons_to_show:
+                break
             neuron_spikes = spike_array[:, neuron_idx]
             time_indices = np.where(neuron_spikes > 0)[0]
             spike_times.extend(time_indices.tolist())

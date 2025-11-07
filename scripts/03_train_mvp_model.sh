@@ -272,6 +272,12 @@ for epoch in range(NUM_EPOCHS):
             'optimizer_state_dict': optimizer.state_dict(),
             'val_acc': val_acc,
             'val_loss': val_loss,
+            'config': {
+                'input_size': input_size,
+                'hidden_size': 128,
+                'output_size': 2,
+                'beta': 0.9
+            }
         }, 'models/best_model.pt')
         print(f"   💾 Saved best model (Val Acc: {val_acc:.2f}%)")
 

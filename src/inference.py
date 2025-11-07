@@ -61,6 +61,7 @@ def predict(
     device: str = 'cuda',
     return_confidence: bool = True,
     num_steps: int = 100,
+    gain: float = 10.0,
     class_names: Optional[List[str]] = None
 ) -> Dict[str, Union[int, float, np.ndarray, str]]:
     """
@@ -84,24 +85,33 @@ def predict(
     model.eval()
     model.to(device)
 
-    # Convert to tensor if numpy
-    if isinstance(input_data, np.ndarray):
-        input_data = torch.FloatTensor(input_data)
-
-    # Ensure proper shape for SNN input
-    # Expected final shape: [num_steps, batch, signal_length]
-
-    if len(input_data.shape) == 1:
-        # Single signal: [signal_length] -> [1, signal_length] -> [num_steps, 1, signal_length]
-        input_data = input_data.unsqueeze(0).unsqueeze(0).repeat(num_steps, 1, 1)
-    elif len(input_data.shape) == 2:
-        # Batch of signals: [batch, signal_length] -> [num_steps, batch, signal_length]
-        input_data = input_data.unsqueeze(0).repeat(num_steps, 1, 1)
-    elif len(input_data.shape) == 3:
-        # Already in correct shape: [num_steps, batch, signal_length]
-        pass
+    # Convert to numpy if tensor
+    if isinstance(input_data, torch.Tensor):
+        signal_np = input_data.cpu().numpy()
     else:
-        raise ValueError(f"Unexpected input shape: {input_data.shape}")
+        signal_np = input_data
+
+    # Handle single signal vs batch and apply 2D spike encoding
+    if len(signal_np.shape) == 1:
+        # Single signal: [signal_length] -> [num_steps, 1, signal_length]
+        # Normalize signal
+        signal_norm = (signal_np - signal_np.min()) / (signal_np.max() - signal_np.min() + 1e-8)
+        # Replicate across time steps and apply Poisson encoding
+        spikes = np.random.rand(num_steps, len(signal_np)) < (signal_norm * gain / 100.0)
+        input_data = torch.FloatTensor(spikes).unsqueeze(1)  # [num_steps, 1, signal_length]
+    elif len(signal_np.shape) == 2:
+        # Batch of signals: [batch, signal_length] -> [num_steps, batch, signal_length]
+        batch_spikes = []
+        for i in range(signal_np.shape[0]):
+            signal_norm = (signal_np[i] - signal_np[i].min()) / (signal_np[i].max() - signal_np[i].min() + 1e-8)
+            spikes = np.random.rand(num_steps, len(signal_np[i])) < (signal_norm * gain / 100.0)
+            batch_spikes.append(spikes)
+        input_data = torch.FloatTensor(np.stack(batch_spikes, axis=1))  # [num_steps, batch, signal_length]
+    elif len(signal_np.shape) == 3:
+        # Already encoded: [num_steps, batch, signal_length]
+        input_data = torch.FloatTensor(signal_np)
+    else:
+        raise ValueError(f"Unexpected input shape: {signal_np.shape}")
 
     input_data = input_data.to(device)
 

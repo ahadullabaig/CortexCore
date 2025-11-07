@@ -222,6 +222,8 @@ resources/presentations/*.key
 # Example: echo "" > data/synthetic/.gitkeep
 
 #Output Documentation (auto-generated, user can regenerate)
-NEXT_STEPS.md
 PHASE_1_SUCCESS_DOCUMENTATION.md
 STDP_IMPLEMENTATION_REPORT.md
+
+#Playwright MCP
+.playwright-mcp

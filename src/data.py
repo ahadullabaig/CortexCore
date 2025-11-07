@@ -149,9 +149,14 @@ class ECGDataset(Dataset):
         label = self.labels[idx]
 
         if self.encode_spikes:
-            # For MVP: replicate signal across time steps
+            # Apply Poisson spike encoding (matches inference.py)
             # Shape: [num_steps, signal_length]
-            signal = signal.unsqueeze(0).repeat(self.num_steps, 1)
+            signal_np = signal.numpy()
+            signal_norm = (signal_np - signal_np.min()) / (signal_np.max() - signal_np.min() + 1e-8)
+
+            # Generate binary spikes using Poisson process
+            spikes = np.random.rand(self.num_steps, len(signal_np)) < (signal_norm * self.gain / 100.0)
+            signal = torch.FloatTensor(spikes)
 
         return signal, label
 
