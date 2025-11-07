@@ -15,6 +15,23 @@ echo "📊 ============================================"
 echo ""
 
 # ==========================================
+# Detect Python (venv or system)
+# ==========================================
+
+if [ -f "venv/bin/python" ]; then
+    PYTHON="venv/bin/python"
+    echo "🐍 Using venv Python: $PYTHON"
+elif [ -n "$VIRTUAL_ENV" ]; then
+    PYTHON="python"
+    echo "🐍 Using activated venv Python"
+else
+    PYTHON="python3"
+    echo "⚠️  WARNING: venv not found, using system Python"
+    echo "   Run 'bash scripts/01_setup_environment.sh' first for best results"
+fi
+echo ""
+
+# ==========================================
 # Configuration
 # ==========================================
 
@@ -47,7 +64,7 @@ echo ""
 
 echo "🔍 Checking dependencies..."
 
-python -c "import neurokit2; import torch; import numpy" 2>/dev/null
+$PYTHON -c "import neurokit2; import torch; import numpy" 2>/dev/null
 if [ $? -eq 0 ]; then
     echo "   ✅ All required packages available"
 else
@@ -311,7 +328,7 @@ except Exception as e:
 EOF
 
 # Run data generation
-python /tmp/generate_data.py
+$PYTHON /tmp/generate_data.py
 
 # Clean up
 rm /tmp/generate_data.py

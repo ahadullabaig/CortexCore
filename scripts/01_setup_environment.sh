@@ -175,6 +175,13 @@ echo ""
 
 echo "📁 Step 8/8: Setting up directory structure..."
 
+# Create directories if they don't exist
+mkdir -p data/synthetic
+mkdir -p data/cache
+mkdir -p models
+mkdir -p results/plots
+mkdir -p results/metrics
+
 # Create .gitkeep files to track empty directories
 touch data/synthetic/.gitkeep
 touch data/cache/.gitkeep
@@ -182,11 +189,15 @@ touch models/.gitkeep
 touch results/plots/.gitkeep
 touch results/metrics/.gitkeep
 
-# Create .env from .env.example if it doesn't exist
+# Create .env from .env.example if it exists
 if [ ! -f ".env" ]; then
-    echo "   Creating .env from .env.example..."
-    cp .env.example .env
-    echo "   ⚠️  Remember to configure .env with your settings"
+    if [ -f ".env.example" ]; then
+        echo "   Creating .env from .env.example..."
+        cp .env.example .env
+        echo "   ⚠️  Remember to configure .env with your settings"
+    else
+        echo "   ⚠️  .env.example not found, skipping .env creation"
+    fi
 fi
 
 echo "   ✅ Directory structure ready"

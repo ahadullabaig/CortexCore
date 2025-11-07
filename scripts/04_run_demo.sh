@@ -15,6 +15,23 @@ echo "🎬 ============================================"
 echo ""
 
 # ==========================================
+# Detect Python (venv or system)
+# ==========================================
+
+if [ -f "venv/bin/python" ]; then
+    PYTHON="venv/bin/python"
+    echo "🐍 Using venv Python: $PYTHON"
+elif [ -n "$VIRTUAL_ENV" ]; then
+    PYTHON="python"
+    echo "🐍 Using activated venv Python"
+else
+    PYTHON="python3"
+    echo "⚠️  WARNING: venv not found, using system Python"
+    echo "   Run 'bash scripts/01_setup_environment.sh' first for best results"
+fi
+echo ""
+
+# ==========================================
 # Configuration
 # ==========================================
 
@@ -67,7 +84,7 @@ echo ""
 
 echo "🔍 Checking Flask installation..."
 
-python -c "import flask" 2>/dev/null
+$PYTHON -c "import flask" 2>/dev/null
 if [ $? -eq 0 ]; then
     echo "   ✅ Flask available"
 else
@@ -117,9 +134,11 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
-# Check if demo/app.py exists, if not create a minimal one
-if [ ! -f "demo/app.py" ]; then
-    echo "⚠️  demo/app.py not found, creating minimal version..."
+# Check if demo/app.py exists and is non-empty
+if [ ! -f "demo/app.py" ] || [ ! -s "demo/app.py" ]; then
+    echo "⚠️  demo/app.py not found or empty, creating minimal version..."
+    echo "   Note: This will create a basic placeholder demo"
+    mkdir -p demo
     cat > demo/app.py << 'EOF'
 from flask import Flask, render_template, jsonify
 import torch
@@ -239,7 +258,7 @@ EOF
 fi
 
 # Launch Flask
-python demo/app.py
+$PYTHON demo/app.py
 
 # This only executes if server is stopped
 echo ""

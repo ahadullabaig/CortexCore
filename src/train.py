@@ -56,8 +56,17 @@ def train_epoch(
         optimizer.zero_grad()
 
         # Forward pass
-        # SNN returns (spikes, membrane): [time_steps, batch, classes]
-        spikes, membrane = model(data)
+        # SNN returns (spikes, membrane) or (spikes, membrane, intermediate)
+        model_output = model(data)
+
+        # Handle both 2-tuple and 3-tuple returns
+        if isinstance(model_output, tuple):
+            if len(model_output) == 3:
+                spikes, membrane, intermediate = model_output
+            else:
+                spikes, membrane = model_output
+        else:
+            raise ValueError("Model output must be a tuple")
 
         # Sum spikes over time dimension for classification
         output = spikes.sum(dim=0)  # [batch, classes]
@@ -115,8 +124,17 @@ def validate(
             data, target = data.to(device), target.to(device)
 
             # Forward pass
-            # SNN returns (spikes, membrane): [time_steps, batch, classes]
-            spikes, membrane = model(data)
+            # SNN returns (spikes, membrane) or (spikes, membrane, intermediate)
+            model_output = model(data)
+
+            # Handle both 2-tuple and 3-tuple returns
+            if isinstance(model_output, tuple):
+                if len(model_output) == 3:
+                    spikes, membrane, intermediate = model_output
+                else:
+                    spikes, membrane = model_output
+            else:
+                raise ValueError("Model output must be a tuple")
 
             # Sum spikes over time dimension for classification
             output = spikes.sum(dim=0)  # [batch, classes]

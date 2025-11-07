@@ -187,8 +187,9 @@ class HybridSTDP_SNN(SimpleSNN):
         self.layer1_frozen = False  # If True, layer 1 weights frozen
 
         # Spike history tracking (for STDP)
-        self.register_buffer('_input_spikes', None)
-        self.register_buffer('_hidden_spikes', None)
+        # Initialize with empty tensors instead of None to avoid runtime errors
+        self.register_buffer('_input_spikes', torch.zeros(0))
+        self.register_buffer('_hidden_spikes', torch.zeros(0))
 
     def forward(
         self,
@@ -271,7 +272,7 @@ class HybridSTDP_SNN(SimpleSNN):
         if self.stdp_layer is None:
             raise RuntimeError("STDP layer not initialized. Pass config to __init__.")
 
-        if self._input_spikes is None or self._hidden_spikes is None:
+        if self._input_spikes.numel() == 0 or self._hidden_spikes.numel() == 0:
             raise RuntimeError(
                 "No spike history available. Call forward() with return_intermediate=True first."
             )
@@ -293,8 +294,8 @@ class HybridSTDP_SNN(SimpleSNN):
             self.fc1.weight.copy_(new_weights)
 
         # Clear spike history to prevent memory leaks
-        self._input_spikes = None
-        self._hidden_spikes = None
+        self._input_spikes = torch.zeros(0).to(self._input_spikes.device)
+        self._hidden_spikes = torch.zeros(0).to(self._hidden_spikes.device)
 
         return stats
 

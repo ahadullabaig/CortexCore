@@ -43,7 +43,8 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for API access
 
 # Load configuration
-MODEL_PATH = os.getenv('MODEL_PATH', 'models/stdp_full/best_finetuned_model.pt')
+# Default to MVP model path first, fall back to STDP model if available
+MODEL_PATH = os.getenv('MODEL_PATH', 'models/best_model.pt')
 DEVICE = os.getenv('DEVICE', 'cuda' if torch.cuda.is_available() else 'cpu')
 DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
 

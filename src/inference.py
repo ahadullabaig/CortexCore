@@ -88,13 +88,20 @@ def predict(
     if isinstance(input_data, np.ndarray):
         input_data = torch.FloatTensor(input_data)
 
-    # Add batch dimension if needed
-    if len(input_data.shape) == 1:
-        input_data = input_data.unsqueeze(0)  # [1, signal_length]
+    # Ensure proper shape for SNN input
+    # Expected final shape: [num_steps, batch, signal_length]
 
-    # Replicate across time steps for SNN: [batch, signal_length] -> [num_steps, batch, signal_length]
-    if len(input_data.shape) == 2:
-        input_data = input_data.unsqueeze(0).repeat(num_steps, 1, 1)  # [num_steps, batch, signal_length]
+    if len(input_data.shape) == 1:
+        # Single signal: [signal_length] -> [1, signal_length] -> [num_steps, 1, signal_length]
+        input_data = input_data.unsqueeze(0).unsqueeze(0).repeat(num_steps, 1, 1)
+    elif len(input_data.shape) == 2:
+        # Batch of signals: [batch, signal_length] -> [num_steps, batch, signal_length]
+        input_data = input_data.unsqueeze(0).repeat(num_steps, 1, 1)
+    elif len(input_data.shape) == 3:
+        # Already in correct shape: [num_steps, batch, signal_length]
+        pass
+    else:
+        raise ValueError(f"Unexpected input shape: {input_data.shape}")
 
     input_data = input_data.to(device)
 
