@@ -27,7 +27,7 @@ import time
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from src.inference import load_model, predict
+    from src.inference import load_model, predict, ensemble_predict
     from src.data import rate_encode
     from src.utils import get_device
     from src.model import SimpleSNN, HybridSTDP_SNN
@@ -175,12 +175,14 @@ def health():
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
     """
-    Prediction API endpoint
+    Prediction API endpoint with optional ensemble averaging
 
     Expected JSON:
     {
         "signal": [array of values],
-        "num_steps": 100 (optional)
+        "num_steps": 100 (optional),
+        "ensemble_size": 5 (optional, enables ensemble averaging),
+        "use_seed": false (optional, for reproducible predictions)
     }
 
     Returns:
@@ -190,7 +192,14 @@ def api_predict():
         "probabilities": [prob1, prob2, ...],
         "class_name": "Normal" or "Arrhythmia",
         "inference_time_ms": time_in_ms,
-        "spike_count": number_of_spikes
+        "spike_count": number_of_spikes,
+
+        # If ensemble_size > 1, additional fields:
+        "confidence_std": uncertainty_measure,
+        "confidence_ci_95": [lower, upper],
+        "agreement_rate": percentage_of_runs_agreeing,
+        "ensemble_size": number_of_runs,
+        "is_ensemble": true/false
     }
     """
     try:
@@ -209,6 +218,9 @@ def api_predict():
 
         signal = np.array(data['signal'])
         num_steps = data.get('num_steps', 100)
+        ensemble_size = data.get('ensemble_size', 1)  # Default: single prediction
+        use_seed = data.get('use_seed', False)
+        seed = 42 if use_seed else None
 
         # Ensure signal is the correct length (2500 samples)
         if len(signal) != 2500:
@@ -216,18 +228,41 @@ def api_predict():
                 'error': f'Signal must be 2500 samples, got {len(signal)}'
             }), 400
 
-        # Make prediction using trained SNN
-        result = predict(
-            model,
-            signal,
-            device=DEVICE,
-            return_confidence=True,
-            num_steps=num_steps
-        )
+        # Validate ensemble_size
+        if ensemble_size < 1 or ensemble_size > 10:
+            return jsonify({
+                'error': f'ensemble_size must be between 1 and 10, got {ensemble_size}'
+            }), 400
+
+        # Make prediction (ensemble or single)
+        if ensemble_size > 1:
+            result = ensemble_predict(
+                model,
+                signal,
+                ensemble_size=ensemble_size,
+                device=DEVICE,
+                num_steps=num_steps,
+                base_seed=seed,
+                return_confidence=True
+            )
+            result['is_ensemble'] = True
+        else:
+            result = predict(
+                model,
+                signal,
+                device=DEVICE,
+                return_confidence=True,
+                num_steps=num_steps,
+                seed=seed
+            )
+            result['is_ensemble'] = False
+            result['ensemble_size'] = 1
 
         return jsonify(result)
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
