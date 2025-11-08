@@ -48,11 +48,11 @@
 - **Spike Encoding Alignment**: Training and inference now use identical binary Poisson encoding
 - **Model Checkpoint**: Added config dictionary for better reproducibility
 - **Demo Validation**: Strengthened model loading checks and error handling
-- **Prediction Variance**: Documented solutions for stochastic inference inconsistency
+- **Ensemble Averaging**: Implemented soft voting aggregation for 54-78% variance reduction
 
 ### 📋 What's Next
-- **Priority 1**: Implement ensemble averaging to stabilize predictions
-- **Priority 2**: Full test set evaluation with clinical metrics
+- **Priority 1**: Full test set evaluation with clinical metrics
+- **Priority 2**: Address arrhythmia detection accuracy (currently 70% ensemble, target 92%+)
 - **Priority 3**: Integration with MIT-BIH real-world ECG dataset
 
 ---
@@ -262,21 +262,26 @@ spikes = np.random.rand(num_steps, len(signal)) < (signal_norm * gain / 100.0)
 - ✅ Model correctly predicts both Normal and Arrhythmia classes
 - ✅ Eliminated systematic prediction bias
 
-#### **Challenge 3: Stochastic Prediction Variance (Active Work)**
+#### **Challenge 3: Stochastic Prediction Variance (Solved ✅)**
 
-**Problem:** Same ECG signal produces different predictions across runs due to Poisson process randomness.
+**Problem:** Same ECG signal produced different predictions across runs due to Poisson process randomness.
 
 **Observed Variance:**
 - First run: 50% confidence
 - Second run: 88.1% confidence
 - Sometimes: misclassification on repeated inference
 
-**Proposed Solutions** (See [NEXT_STEPS_DETAILED.md](docs/NEXT_STEPS_DETAILED.md)):
-1. **Ensemble Averaging**: Run inference 3-5 times, aggregate results (recommended)
-2. **Increase Spike Density**: Higher gain reduces relative impact of random variations
-3. **Deterministic Encoding**: Alternative encoding strategies for production deployment
+**Our Solution:** Implemented ensemble averaging with soft voting (See [ENSEMBLE_AVERAGING_GUIDE.md](docs/ENSEMBLE_AVERAGING_GUIDE.md)):
+- **N=5 ensemble**: Run inference 5 times with different spike encodings
+- **Soft voting**: Average probabilities across runs (superior to majority voting)
+- **Variance reduction**: Achieved 54-78% reduction (matches theoretical 55% for N=5)
+- **Performance**: <350ms latency (real-time capable)
 
-**Status:** Solutions documented and ready for implementation.
+**Impact:**
+- ✅ Prediction stability: Normal ECG 95% → 100% accuracy
+- ✅ Confidence intervals: ±2% typical uncertainty (down from ±12-18%)
+- ✅ API integration: `/api/predict` endpoint supports `ensemble_size` parameter
+- ⚠️ Live testing revealed model accuracy issue: arrhythmia detection at 70% (see [ENSEMBLE_TESTING_REPORT.md](docs/ENSEMBLE_TESTING_REPORT.md))
 
 ### **3. Energy Efficiency That Matters**
 
@@ -460,11 +465,23 @@ Our Flask-based demo provides:
 
 4. **API Endpoints**
    ```
-   POST /api/predict              → Run inference
+   POST /api/predict              → Run inference (supports ensemble_size param)
    POST /api/generate_sample      → Generate synthetic ECG
    POST /api/visualize_spikes     → Get spike raster data
    GET  /api/metrics              → System metrics
    GET  /health                   → Health check
+   ```
+
+   **Ensemble Prediction Example**:
+   ```javascript
+   fetch('/api/predict', {
+     method: 'POST',
+     headers: {'Content-Type': 'application/json'},
+     body: JSON.stringify({
+       signal: ecgData,
+       ensemble_size: 5  // Run 5 predictions, aggregate via soft voting
+     })
+   });
    ```
 
 ---
@@ -535,6 +552,7 @@ CortexCore/
 │   ├── 05_test_integration.sh       # End-to-end tests
 │   ├── train_full_stdp.py           # Full STDP training script
 │   ├── benchmark_stdp.py            # STDP performance benchmarks
+│   ├── validate_ensemble_averaging.py # Ensemble averaging validation (5 tests)
 │   ├── analyze_dataset_quality.py   # Data validation
 │   ├── evaluate_test_set.py         # Clinical metrics evaluation
 │   ├── comprehensive_verification.py # Full pipeline verification
@@ -544,6 +562,8 @@ CortexCore/
 │
 ├── 📚 docs/                         # Documentation
 │   ├── STDP_GUIDE.md                # Full STDP implementation guide
+│   ├── ENSEMBLE_AVERAGING_GUIDE.md  # Ensemble prediction usage guide
+│   ├── ENSEMBLE_TESTING_REPORT.md   # Live testing results & findings
 │   ├── CODE_EXAMPLES.md             # Common coding patterns
 │   ├── MIGRATION_SUMMARY.md         # Project history
 │   ├── NEXT_STEPS_DETAILED.md       # Development roadmap to production
@@ -808,12 +828,25 @@ def forward(self, x):
 
 ## 📚 **Documentation**
 
-- **[NEXT_STEPS_DETAILED.md](docs/NEXT_STEPS_DETAILED.md)** ⭐ **NEW** - Complete development roadmap
+- **[NEXT_STEPS_DETAILED.md](docs/NEXT_STEPS_DETAILED.md)** ⭐ - Complete development roadmap
   - 8-phase progression from 92.3% synthetic to MIT-BIH real data
   - Detailed explanations of stochastic prediction variance solutions
   - Architecture enhancements and spike encoding improvements
   - Production deployment strategies and clinical validation
   - 2000+ lines of comprehensive guidance
+
+- **[ENSEMBLE_AVERAGING_GUIDE.md](docs/ENSEMBLE_AVERAGING_GUIDE.md)** ⭐ **NEW** - Ensemble prediction guide
+  - Complete API reference for `ensemble_predict()`
+  - 5 usage examples (basic, clinical, batch processing)
+  - Performance benchmarks and latency analysis
+  - Clinical decision support with confidence thresholds
+  - Troubleshooting and integration patterns
+
+- **[ENSEMBLE_TESTING_REPORT.md](docs/ENSEMBLE_TESTING_REPORT.md)** ⭐ **NEW** - Live testing results
+  - Comprehensive 4-sample, 80-prediction test suite
+  - Quantitative variance reduction results (54-78%)
+  - Critical findings: arrhythmia detection accuracy issues
+  - Detailed recommendations for Phase 2 improvements
 
 - **[STDP_GUIDE.md](docs/STDP_GUIDE.md)** - Complete STDP implementation guide
   - Full code for STDP updates
@@ -897,7 +930,8 @@ git push origin feature/amazing-feature
 - [x] Multi-phase training strategy
 - [x] Benchmarking infrastructure
 - [x] Comprehensive debugging tools (debug_model.py, verify_demo_fixes.sh)
-- [ ] Stabilize stochastic predictions (ensemble averaging - Priority 1)
+- [x] Stabilize stochastic predictions (ensemble averaging with 54-78% variance reduction)
+- [ ] Address arrhythmia detection accuracy (currently 70%, target 92%+)
 - [ ] Full test set evaluation with clinical metrics
 - [ ] Real-world dataset integration (MIT-BIH, PTB-XL)
 - [ ] Multi-disease detection (3+ conditions)
@@ -905,7 +939,6 @@ git push origin feature/amazing-feature
 - [ ] Edge deployment prototype
 
 ### 📋 **Phase 3: Production (Planned)**
-- [ ] Ensemble prediction implementation for consistency
 - [ ] Model quantization and pruning
 - [ ] ONNX export & optimization
 - [ ] Mobile application (React Native)
