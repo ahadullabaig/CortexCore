@@ -48,6 +48,11 @@ MODEL_PATH = os.getenv('MODEL_PATH', 'models/best_model.pt')
 DEVICE = os.getenv('DEVICE', 'cuda' if torch.cuda.is_available() else 'cpu')
 DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
 
+# Classification threshold for high-sensitivity arrhythmia detection
+# Lower threshold = higher sensitivity (fewer missed arrhythmias)
+# Default 0.40 targets 95% sensitivity based on ROC analysis
+SENSITIVITY_THRESHOLD = float(os.getenv('SENSITIVITY_THRESHOLD', '0.40'))
+
 # Global model variable
 model = None
 model_info = {}
@@ -234,7 +239,7 @@ def api_predict():
                 'error': f'ensemble_size must be between 1 and 10, got {ensemble_size}'
             }), 400
 
-        # Make prediction (ensemble or single)
+        # Make prediction (ensemble or single) with calibrated threshold
         if ensemble_size > 1:
             result = ensemble_predict(
                 model,
@@ -243,7 +248,8 @@ def api_predict():
                 device=DEVICE,
                 num_steps=num_steps,
                 base_seed=seed,
-                return_confidence=True
+                return_confidence=True,
+                sensitivity_threshold=SENSITIVITY_THRESHOLD
             )
             result['is_ensemble'] = True
         else:
@@ -253,7 +259,8 @@ def api_predict():
                 device=DEVICE,
                 return_confidence=True,
                 num_steps=num_steps,
-                seed=seed
+                seed=seed,
+                sensitivity_threshold=SENSITIVITY_THRESHOLD
             )
             result['is_ensemble'] = False
             result['ensemble_size'] = 1

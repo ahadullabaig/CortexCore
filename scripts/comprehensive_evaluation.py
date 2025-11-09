@@ -34,7 +34,7 @@ from tqdm import tqdm
 from typing import Dict, List, Any, Tuple
 
 # Project imports
-from src.model import SimpleSNN
+from src.model import SimpleSNN, WiderSNN, DeepSNN
 from src.inference import load_model, ensemble_predict
 from src.utils import set_seed, get_device
 from src.evaluation import metrics, robustness, visualizations, reports
@@ -80,6 +80,39 @@ def save_results(results: Dict[str, Any], output_path: Path):
     print(f"   ✅ Saved results to: {output_path}")
 
 
+def detect_model_architecture(model_path: str, device: str = 'cpu') -> nn.Module:
+    """
+    Detect and instantiate the correct model architecture from checkpoint
+
+    Args:
+        model_path: Path to model checkpoint
+        device: Device for loading
+
+    Returns:
+        Instantiated model (SimpleSNN, WiderSNN, or DeepSNN)
+    """
+    # Load checkpoint to read config
+    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
+
+    if 'config' in checkpoint:
+        config = checkpoint['config']
+        architecture = config.get('architecture', 'SimpleSNN')
+
+        if architecture == 'DeepSNN':
+            hidden_sizes = config.get('hidden_sizes', [256, 128])
+            dropout = config.get('dropout', 0.3)
+            return DeepSNN(hidden_sizes=hidden_sizes, dropout=dropout)
+        elif architecture == 'WiderSNN':
+            hidden_size = config.get('hidden_size', 256)
+            dropout = config.get('dropout', 0.2)
+            return WiderSNN(hidden_size=hidden_size, dropout=dropout)
+        else:
+            return SimpleSNN()
+    else:
+        # No config, assume SimpleSNN (baseline)
+        return SimpleSNN()
+
+
 def run_task_2_1(
     model: nn.Module,
     test_signals: np.ndarray,
@@ -111,12 +144,21 @@ def run_task_2_1(
 
     # Run predictions with progress bar
     for i, signal in enumerate(tqdm(test_signals, desc="Evaluating test set")):
+        # Use deterministic seed for reproducibility
+        # Seed pattern matches optimize_threshold.py: 42 + sample_idx * 1000
+        # This ensures each sample gets unique seeds for ensemble members:
+        #   Sample 0: seeds 42, 43, 44 (for ensemble_size=3)
+        #   Sample 1: seeds 1042, 1043, 1044
+        #   etc.
+        sample_base_seed = 42 + i * 1000
+
         result = ensemble_predict(
             model=model,
             input_data=signal,
             ensemble_size=ensemble_size,
             device=str(device),
-            return_confidence=True
+            return_confidence=True,
+            base_seed=sample_base_seed  # CRITICAL: Ensures deterministic spike encoding
         )
 
         predictions.append(result['prediction'])
@@ -741,8 +783,10 @@ Examples:
     # Load model and data
     logger.info("\n📦 Loading model and test data...")
     try:
-        model = load_model(args.model_path, SimpleSNN(), device=str(device))
-        logger.info(f"   ✅ Model loaded successfully")
+        # Detect and instantiate correct model architecture
+        model_instance = detect_model_architecture(args.model_path, device=str(device))
+        model = load_model(args.model_path, model_instance, device=str(device))
+        logger.info(f"   ✅ Model loaded successfully ({model_instance.__class__.__name__})")
     except Exception as e:
         logger.error(f"   ❌ Failed to load model: {e}")
         return 1

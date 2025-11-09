@@ -42,7 +42,9 @@ def load_model(model_path: str, model_class: nn.Module, device: str = 'cuda') ->
     """
     device = torch.device(device if torch.cuda.is_available() else 'cpu')
 
-    checkpoint = torch.load(model_path, map_location=device)
+    # Load checkpoint with weights_only=False for backward compatibility
+    # (PyTorch 2.6+ requires this for checkpoints with numpy objects)
+    checkpoint = torch.load(model_path, map_location=device, weights_only=False)
 
     if 'model_state_dict' in checkpoint:
         model_class.load_state_dict(checkpoint['model_state_dict'])
@@ -64,7 +66,8 @@ def predict(
     gain: float = 10.0,
     class_names: Optional[List[str]] = None,
     seed: Optional[int] = None,
-    ensemble_size: Optional[int] = None
+    ensemble_size: Optional[int] = None,
+    sensitivity_threshold: Optional[float] = None
 ) -> Dict[str, Union[int, float, np.ndarray, str]]:
     """
     Make prediction on input data with optional ensemble averaging
@@ -81,6 +84,10 @@ def predict(
         ensemble_size: If provided (e.g., 5), performs ensemble averaging with
                       N independent runs. This dramatically reduces variance
                       from stochastic spike encoding.
+        sensitivity_threshold: Classification threshold for arrhythmia detection.
+                              If None, uses argmax (equivalent to 0.5).
+                              Lower values increase sensitivity (fewer false negatives).
+                              Recommended: 0.35-0.45 for 95% sensitivity target.
 
     Returns:
         Prediction dictionary with prediction, confidence, class_name, etc.
@@ -96,6 +103,10 @@ def predict(
         >>> # Ensemble prediction (recommended for production)
         >>> result = predict(model, signal, ensemble_size=5)
         >>> print(f"Confidence: {result['confidence']:.2%} ± {result['confidence_std']:.2%}")
+        >>>
+        >>> # High-sensitivity prediction (clinical use)
+        >>> result = predict(model, signal, sensitivity_threshold=0.35)
+        >>> print(f"Arrhythmia prob: {result['arrhythmia_probability']:.1%}")
     """
     # If ensemble requested, delegate to ensemble_predict
     if ensemble_size is not None and ensemble_size > 1:
@@ -107,7 +118,8 @@ def predict(
             num_steps=num_steps,
             gain=gain,
             class_names=class_names,
-            return_confidence=return_confidence
+            return_confidence=return_confidence,
+            sensitivity_threshold=sensitivity_threshold
         )
 
     if class_names is None:
@@ -172,23 +184,32 @@ def predict(
         else:
             spike_count = 0
 
-        # Get prediction
+        # Get prediction with calibrated threshold
         probabilities = torch.softmax(output, dim=1)
-        prediction = output.argmax(dim=1)
-        confidence = probabilities.max(dim=1).values
+        arrhythmia_prob = probabilities[0, 1].item()  # Probability of class 1 (Arrhythmia)
+
+        if sensitivity_threshold is not None:
+            # Use calibrated threshold for higher sensitivity
+            pred_idx = 1 if arrhythmia_prob >= sensitivity_threshold else 0
+            confidence = max(arrhythmia_prob, 1 - arrhythmia_prob)
+        else:
+            # Default: use argmax (equivalent to 0.5 threshold)
+            prediction = output.argmax(dim=1)
+            pred_idx = prediction.cpu().item()
+            confidence = probabilities.max(dim=1).values.cpu().item()
 
     inference_time = (time.time() - start_time) * 1000  # ms
 
-    pred_idx = prediction.cpu().item()
     result = {
         'prediction': pred_idx,
         'class_name': class_names[pred_idx],
         'inference_time_ms': inference_time,
-        'spike_count': spike_count
+        'spike_count': spike_count,
+        'arrhythmia_probability': arrhythmia_prob  # Always include for transparency
     }
 
     if return_confidence:
-        result['confidence'] = confidence.cpu().item()
+        result['confidence'] = confidence
         result['probabilities'] = probabilities.cpu().numpy()[0].tolist()
 
     return result
@@ -247,7 +268,8 @@ def ensemble_predict(
     class_names: Optional[List[str]] = None,
     return_confidence: bool = True,
     base_seed: Optional[int] = None,
-    return_detailed_stats: bool = False
+    return_detailed_stats: bool = False,
+    sensitivity_threshold: Optional[float] = None
 ) -> Dict[str, Union[int, float, np.ndarray, str, List]]:
     """
     Ensemble prediction with variance reduction for stochastic spike encoding
@@ -278,6 +300,7 @@ def ensemble_predict(
         return_confidence: Whether to return confidence scores
         base_seed: Optional base seed for reproducibility (uses base_seed+i for run i)
         return_detailed_stats: If True, returns full statistics from all runs
+        sensitivity_threshold: Classification threshold for arrhythmia detection (see predict())
 
     Returns:
         Dictionary containing:
@@ -366,7 +389,8 @@ def ensemble_predict(
             num_steps=num_steps,
             gain=gain,
             class_names=class_names,
-            seed=base_seed
+            seed=base_seed,
+            sensitivity_threshold=sensitivity_threshold
         )
 
     # Run ensemble predictions
@@ -386,7 +410,8 @@ def ensemble_predict(
             num_steps=num_steps,
             gain=gain,
             class_names=class_names,
-            seed=run_seed
+            seed=run_seed,
+            sensitivity_threshold=sensitivity_threshold
         )
         all_predictions.append(result)
 

@@ -108,6 +108,249 @@ class SimpleSNN(nn.Module):
 
 
 # ============================================
+# Enhanced Architectures (Tier 1 Fix #3)
+# ============================================
+
+class WiderSNN(nn.Module):
+    """
+    Wider SNN with increased hidden layer capacity
+
+    Architecture:
+        Input → FC (2500→256) → LIF → Dropout → FC (256→2) → LIF → Output
+
+    Improvements over SimpleSNN:
+        - 2x hidden layer size (256 vs 128)
+        - Dropout regularization (0.2)
+        - ~640K parameters (2x SimpleSNN)
+
+    Clinical Motivation:
+        Increased capacity allows learning more complex temporal patterns
+        for better discrimination between borderline arrhythmia cases.
+
+    Args:
+        input_size: Input feature dimension (default: 2500 for 10s @ 250Hz)
+        hidden_size: Hidden layer size (default: 256)
+        output_size: Number of classes (default: 2)
+        beta: Membrane potential decay rate (default: 0.9)
+        spike_grad: Surrogate gradient function (default: fast_sigmoid)
+        dropout: Dropout probability (default: 0.2)
+
+    Example:
+        >>> model = WiderSNN(hidden_size=256, dropout=0.2)
+        >>> spikes, membrane = model(input_tensor)
+        >>> output = spikes.sum(dim=0)  # Sum over time for classification
+    """
+
+    def __init__(
+        self,
+        input_size: int = 2500,
+        hidden_size: int = 256,
+        output_size: int = 2,
+        beta: float = 0.9,
+        spike_grad: Optional[Any] = None,
+        dropout: float = 0.2
+    ):
+        super().__init__()
+
+        if spike_grad is None:
+            spike_grad = surrogate.fast_sigmoid()
+
+        # Layer 1: Input → Hidden
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.lif1 = snn.Leaky(beta=beta, spike_grad=spike_grad)
+        self.dropout1 = nn.Dropout(dropout)
+
+        # Layer 2: Hidden → Output
+        self.fc2 = nn.Linear(hidden_size, output_size)
+        self.lif2 = snn.Leaky(beta=beta, spike_grad=spike_grad)
+
+        # Store config for checkpointing
+        self.config = {
+            'input_size': input_size,
+            'hidden_size': hidden_size,
+            'output_size': output_size,
+            'beta': beta,
+            'dropout': dropout,
+            'architecture': 'WiderSNN'
+        }
+
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass through wider SNN
+
+        Args:
+            x: Input tensor [time_steps, batch, features] or [batch, time_steps, features]
+
+        Returns:
+            spikes: Output spikes [time_steps, batch, output_size]
+            membrane: Membrane potentials [time_steps, batch, output_size]
+        """
+        # Ensure correct dimension order: [time_steps, batch, features]
+        if len(x.shape) == 3 and x.shape[0] < x.shape[1]:
+            x = x.transpose(0, 1)
+
+        # Initialize hidden states
+        mem1 = self.lif1.init_leaky()
+        mem2 = self.lif2.init_leaky()
+
+        # Record outputs
+        spk2_rec = []
+        mem2_rec = []
+
+        # Process each time step
+        for step in range(x.size(0)):
+            # Layer 1: Input → Hidden
+            cur1 = self.fc1(x[step])
+            spk1, mem1 = self.lif1(cur1, mem1)
+            spk1 = self.dropout1(spk1)  # Apply dropout to spikes
+
+            # Layer 2: Hidden → Output
+            cur2 = self.fc2(spk1)
+            spk2, mem2 = self.lif2(cur2, mem2)
+
+            spk2_rec.append(spk2)
+            mem2_rec.append(mem2)
+
+        return torch.stack(spk2_rec), torch.stack(mem2_rec)
+
+
+class DeepSNN(nn.Module):
+    """
+    Deeper SNN with hierarchical feature learning (RECOMMENDED)
+
+    Architecture:
+        2500 → FC (256) → LIF → Dropout →
+        256 → FC (128) → LIF → Dropout →
+        128 → FC (2) → LIF → Output
+
+    Feature Hierarchy:
+        Layer 1 (256): Extract low-level temporal features (P-waves, QRS complex)
+        Layer 2 (128): Combine into mid-level patterns (heartbeat rhythm, variability)
+        Layer 3 (2):   High-level decision (normal vs arrhythmia)
+
+    Improvements over SimpleSNN:
+        - 3 layers vs 2 (deeper feature hierarchy)
+        - 256→128 cascade vs single 128 bottleneck
+        - Higher dropout (0.3) for better regularization
+        - ~673K parameters
+
+    Clinical Motivation:
+        Hierarchical processing mimics biological neural systems and allows
+        learning compositional features. Low-level features detect individual
+        heartbeat components, mid-level features detect patterns across beats,
+        and high-level features make diagnostic decisions.
+
+        This is particularly useful for:
+        - Subtle arrhythmias with complex temporal patterns
+        - Borderline cases requiring multi-scale analysis
+        - Patient-specific variability
+
+    Args:
+        input_size: Input feature dimension (default: 2500)
+        hidden_sizes: List of hidden layer sizes (default: [256, 128])
+        output_size: Number of classes (default: 2)
+        beta: Membrane potential decay rate (default: 0.9)
+        spike_grad: Surrogate gradient function (default: fast_sigmoid)
+        dropout: Dropout probability (default: 0.3)
+
+    Example:
+        >>> model = DeepSNN(hidden_sizes=[256, 128], dropout=0.3)
+        >>> spikes, membrane = model(input_tensor)
+        >>> output = spikes.sum(dim=0)
+
+    Note:
+        Higher dropout (0.3) is used to prevent overfitting with the larger
+        model capacity. May need to tune based on training set size.
+    """
+
+    def __init__(
+        self,
+        input_size: int = 2500,
+        hidden_sizes: list = None,
+        output_size: int = 2,
+        beta: float = 0.9,
+        spike_grad: Optional[Any] = None,
+        dropout: float = 0.3
+    ):
+        super().__init__()
+
+        if hidden_sizes is None:
+            hidden_sizes = [256, 128]
+
+        if spike_grad is None:
+            spike_grad = surrogate.fast_sigmoid()
+
+        # Layer 1: Input → Hidden1 (2500 → 256)
+        self.fc1 = nn.Linear(input_size, hidden_sizes[0])
+        self.lif1 = snn.Leaky(beta=beta, spike_grad=spike_grad)
+        self.dropout1 = nn.Dropout(dropout)
+
+        # Layer 2: Hidden1 → Hidden2 (256 → 128)
+        self.fc2 = nn.Linear(hidden_sizes[0], hidden_sizes[1])
+        self.lif2 = snn.Leaky(beta=beta, spike_grad=spike_grad)
+        self.dropout2 = nn.Dropout(dropout)
+
+        # Layer 3: Hidden2 → Output (128 → 2)
+        self.fc3 = nn.Linear(hidden_sizes[1], output_size)
+        self.lif3 = snn.Leaky(beta=beta, spike_grad=spike_grad)
+
+        # Store config for checkpointing
+        self.config = {
+            'input_size': input_size,
+            'hidden_sizes': hidden_sizes,
+            'output_size': output_size,
+            'beta': beta,
+            'dropout': dropout,
+            'architecture': 'DeepSNN'
+        }
+
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Forward pass through deep SNN
+
+        Args:
+            x: Input tensor [time_steps, batch, features] or [batch, time_steps, features]
+
+        Returns:
+            spikes: Output spikes [time_steps, batch, output_size]
+            membrane: Membrane potentials [time_steps, batch, output_size]
+        """
+        # Ensure correct dimension order: [time_steps, batch, features]
+        if len(x.shape) == 3 and x.shape[0] < x.shape[1]:
+            x = x.transpose(0, 1)
+
+        # Initialize hidden states for all layers
+        mem1 = self.lif1.init_leaky()
+        mem2 = self.lif2.init_leaky()
+        mem3 = self.lif3.init_leaky()
+
+        # Record outputs
+        spk3_rec = []
+        mem3_rec = []
+
+        # Process each time step
+        for step in range(x.size(0)):
+            # Layer 1: Input → Hidden1
+            cur1 = self.fc1(x[step])
+            spk1, mem1 = self.lif1(cur1, mem1)
+            spk1 = self.dropout1(spk1)
+
+            # Layer 2: Hidden1 → Hidden2
+            cur2 = self.fc2(spk1)
+            spk2, mem2 = self.lif2(cur2, mem2)
+            spk2 = self.dropout2(spk2)
+
+            # Layer 3: Hidden2 → Output
+            cur3 = self.fc3(spk2)
+            spk3, mem3 = self.lif3(cur3, mem3)
+
+            spk3_rec.append(spk3)
+            mem3_rec.append(mem3)
+
+        return torch.stack(spk3_rec), torch.stack(mem3_rec)
+
+
+# ============================================
 # Hybrid STDP-SNN Architecture (Phase 2)
 # ============================================
 
@@ -351,22 +594,8 @@ class HybridSTDP_SNN(SimpleSNN):
 # ============================================
 # TODO: Day 5-7 - Enhanced SNN
 # ============================================
-
-class DeepSNN(nn.Module):
-    """
-    Deeper SNN with multiple hidden layers
-
-    TODO:
-        - Implement this during Week 1
-        - Add batch normalization
-        - Add dropout for regularization
-    """
-
-    def __init__(self, input_size: int = 2500, num_classes: int = 2):
-        super().__init__()
-        # TODO: Implement architecture
-        raise NotImplementedError("Week 1 task")
-
+# NOTE: DeepSNN and WiderSNN are now implemented above (Tier 1 Fix #3)
+# Previous TODO placeholder has been replaced with full implementation
 
 # ============================================
 # TODO: Day 8-14 - Hybrid SNN-ANN
