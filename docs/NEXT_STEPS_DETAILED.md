@@ -1,7 +1,21 @@
 # CortexCore Next Steps - Detailed Development Roadmap
 ## From Current State (92.3% Synthetic Data) to Production (MIT-BIH Real Data)
 
-**Document Version**: 1.0
+> **⚠️ NOTICE: This document has been SUPERSEDED by a reorganized roadmap**
+>
+> **Original Plan** (this document): Linear progression Phase 1→2→3→4→5→6→7→8
+> **New Plan** (November 9, 2025): Real Data First - Phase 1→2→**8**→Decision→9-12
+>
+> **See**: `docs/NEXT_STEPS_REORGANIZED.md` for current development plan
+> **Rationale**: `docs/REORGANIZATION_RATIONALE.md` explains why we pivoted
+>
+> **Key Change**: Prioritize MIT-BIH real data validation (Day 11-15) BEFORE synthetic optimizations (Phase 3-7)
+>
+> This document is preserved for historical reference and comprehensive phase descriptions.
+
+---
+
+**Document Version**: 1.0 (ARCHIVED - See NEXT_STEPS_REORGANIZED.md for v2.0)
 **Date**: 2025-11-07
 **Current Model**: SimpleSNN with proper spike encoding, 92.3% validation accuracy
 **Last Achievement**: Successfully retrained model with binary Poisson spike encoding
