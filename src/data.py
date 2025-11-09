@@ -118,7 +118,18 @@ def rate_encode(
 
 class ECGDataset(Dataset):
     """
-    PyTorch Dataset for ECG signals
+    PyTorch Dataset for ECG signals (supports both synthetic and MIT-BIH formats)
+
+    Synthetic format:
+        - signals: [n_samples, signal_length]
+        - labels: [n_samples]
+
+    MIT-BIH format (additional metadata):
+        - signals: [n_samples, signal_length]
+        - labels: [n_samples]
+        - patient_ids: List[str] (optional)
+        - segment_confidence: [n_samples] (optional, fraction of arrhythmic beats)
+        - sqi_scores: [n_samples] (optional, signal quality scores)
 
     TODO:
         - Add data augmentation
@@ -126,7 +137,17 @@ class ECGDataset(Dataset):
         - Add multi-modal support (ECG + EEG)
     """
 
-    def __init__(self, signals: np.ndarray, labels: np.ndarray, encode_spikes: bool = True, num_steps: int = 100, gain: float = 10.0):
+    def __init__(
+        self,
+        signals: np.ndarray,
+        labels: np.ndarray,
+        encode_spikes: bool = True,
+        num_steps: int = 100,
+        gain: float = 10.0,
+        patient_ids: Optional[list] = None,
+        segment_confidence: Optional[np.ndarray] = None,
+        sqi_scores: Optional[np.ndarray] = None
+    ):
         """
         Args:
             signals: ECG signals [n_samples, signal_length]
@@ -134,12 +155,20 @@ class ECGDataset(Dataset):
             encode_spikes: Whether to encode as spikes
             num_steps: Number of time steps for spike encoding
             gain: Spike encoding gain parameter
+            patient_ids: Patient IDs for each segment (MIT-BIH only)
+            segment_confidence: Confidence scores for segments (MIT-BIH only)
+            sqi_scores: Signal quality index for segments (MIT-BIH only)
         """
         self.signals = torch.FloatTensor(signals)
         self.labels = torch.LongTensor(labels)
         self.encode_spikes = encode_spikes
         self.num_steps = num_steps
         self.gain = gain
+
+        # MIT-BIH metadata (optional)
+        self.patient_ids = patient_ids
+        self.segment_confidence = torch.FloatTensor(segment_confidence) if segment_confidence is not None else None
+        self.sqi_scores = torch.FloatTensor(sqi_scores) if sqi_scores is not None else None
 
     def __len__(self) -> int:
         return len(self.signals)
@@ -160,19 +189,60 @@ class ECGDataset(Dataset):
 
         return signal, label
 
+    def get_metadata(self, idx: int) -> dict:
+        """
+        Get metadata for a specific sample (MIT-BIH only)
+
+        Args:
+            idx: Sample index
+
+        Returns:
+            Dictionary with patient_id, confidence, sqi (None if not available)
+        """
+        metadata = {}
+
+        if self.patient_ids is not None:
+            metadata['patient_id'] = self.patient_ids[idx]
+
+        if self.segment_confidence is not None:
+            metadata['confidence'] = self.segment_confidence[idx].item()
+
+        if self.sqi_scores is not None:
+            metadata['sqi'] = self.sqi_scores[idx].item()
+
+        return metadata
+
 
 def load_dataset(
     data_path: str,
     batch_size: int = 32,
-    shuffle: bool = True
+    shuffle: bool = True,
+    encode_spikes: bool = True,
+    num_steps: int = 100,
+    gain: float = 10.0
 ) -> DataLoader:
     """
-    Load dataset and create DataLoader
+    Load dataset and create DataLoader (supports both synthetic and MIT-BIH formats)
+
+    Synthetic format (.pt file):
+        {'signals': ndarray, 'labels': ndarray}
+
+    MIT-BIH format (.pt file):
+        {
+            'signals': ndarray,
+            'labels': ndarray,
+            'patient_ids': List[str],
+            'segment_confidence': ndarray,
+            'sqi_scores': ndarray
+        }
 
     Args:
         data_path: Path to .pt file
         batch_size: Batch size
         shuffle: Whether to shuffle
+        encode_spikes: Whether to apply spike encoding
+        num_steps: Number of time steps for spike encoding
+        gain: Spike encoding gain parameter
 
     Returns:
         DataLoader instance
@@ -181,11 +251,37 @@ def load_dataset(
         - Add validation split
         - Implement stratified sampling
     """
-    data = torch.load(data_path)
+    # PyTorch 2.6+ requires weights_only=False for non-model data
+    try:
+        data = torch.load(data_path, weights_only=False)
+    except TypeError:
+        # Older PyTorch versions don't have weights_only parameter
+        data = torch.load(data_path)
+
+    # Convert tensors to numpy if needed
+    signals = data['signals'].numpy() if isinstance(data['signals'], torch.Tensor) else data['signals']
+    labels = data['labels'].numpy() if isinstance(data['labels'], torch.Tensor) else data['labels']
+
+    # Extract MIT-BIH metadata if present
+    patient_ids = data.get('patient_ids', None)
+    segment_confidence = data.get('segment_confidence', None)
+    sqi_scores = data.get('sqi_scores', None)
+
+    # Convert metadata tensors to numpy if needed
+    if segment_confidence is not None and isinstance(segment_confidence, torch.Tensor):
+        segment_confidence = segment_confidence.numpy()
+    if sqi_scores is not None and isinstance(sqi_scores, torch.Tensor):
+        sqi_scores = sqi_scores.numpy()
 
     dataset = ECGDataset(
-        signals=data['signals'].numpy() if isinstance(data['signals'], torch.Tensor) else data['signals'],
-        labels=data['labels'].numpy() if isinstance(data['labels'], torch.Tensor) else data['labels']
+        signals=signals,
+        labels=labels,
+        encode_spikes=encode_spikes,
+        num_steps=num_steps,
+        gain=gain,
+        patient_ids=patient_ids,
+        segment_confidence=segment_confidence,
+        sqi_scores=sqi_scores
     )
 
     return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
