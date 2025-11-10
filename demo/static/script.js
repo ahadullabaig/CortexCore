@@ -37,9 +37,19 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     const generateBtn = document.getElementById('generate-btn');
     const predictBtn = document.getElementById('predict-btn');
+    const conditionSelect = document.getElementById('condition-select');
 
     generateBtn.addEventListener('click', generateSample);
     predictBtn.addEventListener('click', runPrediction);
+
+    // Update condition preview on change
+    conditionSelect.addEventListener('change', function(e) {
+        const previews = {
+            'normal': '70 BPM, Low Noise',
+            'arrhythmia': '120 BPM, High Noise'
+        };
+        document.getElementById('condition-preview').textContent = previews[e.target.value];
+    });
 }
 
 // ============================================
@@ -151,6 +161,17 @@ async function generateSpikes(signal) {
         }
 
         currentSpikes = data;
+
+        // Update spike statistics
+        const totalSpikes = data.spike_times.length;
+        const duration = 10.0; // ECG signal duration is always 10 seconds
+        const firingRate = (totalSpikes / duration).toFixed(1);
+        const sparsity = ((totalSpikes / (data.num_neurons * data.num_steps)) * 100).toFixed(1);
+
+        document.getElementById('total-spikes').textContent = totalSpikes;
+        document.getElementById('firing-rate').textContent = `${firingRate} Hz`;
+        document.getElementById('sparsity').textContent = `${sparsity}%`;
+
         plotSpikes(data);
 
         console.log('✅ Spikes generated:', data);
@@ -207,21 +228,73 @@ async function runPrediction() {
 // ============================================
 
 function initializePlots() {
-    // Initialize empty ECG plot
+    // Initialize empty ECG plot with dark theme
     const ecgLayout = {
-        title: 'No signal generated yet',
-        xaxis: { title: 'Sample' },
-        yaxis: { title: 'Amplitude' },
-        margin: { t: 40, r: 20, b: 40, l: 50 }
+        title: {
+            text: 'No signal generated yet',
+            font: {
+                family: 'JetBrains Mono, monospace',
+                color: '#b4bcd0'
+            }
+        },
+        xaxis: {
+            title: {
+                text: 'Sample',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            color: '#b4bcd0'
+        },
+        yaxis: {
+            title: {
+                text: 'Amplitude',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            color: '#b4bcd0'
+        },
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        margin: { t: 60, r: 20, b: 60, l: 70 },
+        font: {
+            family: 'JetBrains Mono, monospace',
+            color: '#b4bcd0'
+        }
     };
     Plotly.newPlot('ecg-plot', [], ecgLayout);
 
-    // Initialize empty spike plot
+    // Initialize empty spike plot with dark theme
     const spikeLayout = {
-        title: 'No spikes generated yet',
-        xaxis: { title: 'Time Step' },
-        yaxis: { title: 'Neuron Index' },
-        margin: { t: 40, r: 20, b: 40, l: 50 }
+        title: {
+            text: 'No spikes generated yet',
+            font: {
+                family: 'JetBrains Mono, monospace',
+                color: '#b4bcd0'
+            }
+        },
+        xaxis: {
+            title: {
+                text: 'Time Step',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            color: '#b4bcd0'
+        },
+        yaxis: {
+            title: {
+                text: 'Neuron Index',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            color: '#b4bcd0'
+        },
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        margin: { t: 60, r: 20, b: 60, l: 70 },
+        font: {
+            family: 'JetBrains Mono, monospace',
+            color: '#b4bcd0'
+        }
     };
     Plotly.newPlot('spike-plot', [], spikeLayout);
 }
@@ -239,18 +312,38 @@ function plotECG(signal, condition) {
     };
 
     const layout = {
-        title: `ECG Signal - ${condition.charAt(0).toUpperCase() + condition.slice(1)}`,
+        title: {
+            text: `ECG Signal - ${condition.charAt(0).toUpperCase() + condition.slice(1)}`,
+            font: {
+                family: 'JetBrains Mono, monospace',
+                color: '#b4bcd0'
+            }
+        },
         xaxis: {
-            title: 'Sample',
-            gridcolor: '#e0e0e0'
+            title: {
+                text: 'Sample',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
+            color: '#b4bcd0'
         },
         yaxis: {
-            title: 'Amplitude (normalized)',
-            gridcolor: '#e0e0e0'
+            title: {
+                text: 'Amplitude (normalized)',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
+            color: '#b4bcd0'
         },
-        plot_bgcolor: '#fafafa',
-        paper_bgcolor: '#ffffff',
-        margin: { t: 40, r: 20, b: 40, l: 50 }
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        margin: { t: 60, r: 20, b: 60, l: 70 },
+        font: {
+            family: 'JetBrains Mono, monospace',
+            color: '#b4bcd0'
+        }
     };
 
     Plotly.newPlot('ecg-plot', [trace], layout);
@@ -274,20 +367,40 @@ function plotSpikes(spikeData) {
     };
 
     const layout = {
-        title: `Spike Raster Plot - ${spikeData.spike_times.length} total spikes`,
+        title: {
+            text: `Spike Raster Plot - ${spikeData.spike_times.length} total spikes`,
+            font: {
+                family: 'JetBrains Mono, monospace',
+                color: '#b4bcd0'
+            }
+        },
         xaxis: {
-            title: 'Time Step',
+            title: {
+                text: 'Time Step',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
             range: [0, spikeData.num_steps],
-            gridcolor: '#e0e0e0'
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
+            color: '#b4bcd0'
         },
         yaxis: {
-            title: 'Neuron Index',
+            title: {
+                text: 'Neuron Index',
+                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
+            },
             range: [-1, spikeData.num_neurons],
-            gridcolor: '#e0e0e0'
+            gridcolor: 'rgba(180, 188, 208, 0.1)',
+            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
+            color: '#b4bcd0'
         },
-        plot_bgcolor: '#fafafa',
-        paper_bgcolor: '#ffffff',
-        margin: { t: 40, r: 20, b: 40, l: 50 }
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',
+        paper_bgcolor: 'rgba(0, 0, 0, 0)',
+        margin: { t: 60, r: 20, b: 60, l: 70 },
+        font: {
+            family: 'JetBrains Mono, monospace',
+            color: '#b4bcd0'
+        }
     };
 
     Plotly.newPlot('spike-plot', [trace], layout);
