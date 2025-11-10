@@ -1099,3 +1099,1051 @@ a:focus-visible {
 .glow-red {
   box-shadow: var(--glow-red);
 }
+
+
+/* ============================================
+   PHASE 2: ENHANCED COMPONENT STYLES
+   ============================================ */
+
+/* ============================================
+   21. NEURAL HEADER (Enhanced)
+   ============================================ */
+
+.neural-header {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-moderate);
+  padding: 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top accent border with glow */
+.neural-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-accent);
+  box-shadow: var(--glow-cyan);
+}
+
+.neural-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Neural pulse icon with animated dots */
+.neural-pulse-icon {
+  display: flex;
+  gap: 4px;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--neural-cyan);
+  animation: neuronFire 1.4s ease-in-out infinite;
+}
+
+.pulse-dot:nth-child(1) { animation-delay: 0s; }
+.pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+.pulse-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.neural-title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+  margin: 0;
+}
+
+.neural-version {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.neural-subtitle {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.subtitle-label {
+  color: var(--neural-cyan);
+  font-weight: 600;
+}
+
+
+/* ============================================
+   22. STATUS PANEL (Enhanced - Mission Control)
+   ============================================ */
+
+.status-panel {
+  background: var(--gradient-card);
+}
+
+.card-title {
+  font-family: var(--font-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.title-icon {
+  font-size: 1.2em;
+  filter: drop-shadow(var(--glow-cyan));
+}
+
+.status-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.status-metric {
+  background: rgba(26, 31, 46, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all var(--duration-base);
+}
+
+.status-metric:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.1);
+}
+
+.metric-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.label-text {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.label-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.label-indicator.online {
+  background: var(--clinical-normal);
+  box-shadow: var(--glow-green);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.label-indicator.loading {
+  background: var(--clinical-warning);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+
+.metric-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.metric-detail {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.metric-graph {
+  height: 4px;
+  background: var(--border-moderate);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.graph-bar {
+  height: 100%;
+  background: var(--gradient-accent);
+  border-radius: 2px;
+  transition: width var(--duration-slow);
+}
+
+
+/* ============================================
+   23. ENCODER PANEL (Enhanced - Neural Encoder)
+   ============================================ */
+
+.encoder-panel {
+  background: var(--gradient-card);
+}
+
+.encoder-controls {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.control-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label-text {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+}
+
+.label-hint {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.control-select-wrapper {
+  position: relative;
+}
+
+.control-select {
+  font-family: var(--font-secondary);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-moderate);
+  border-radius: 6px;
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all var(--duration-base);
+  appearance: none;
+}
+
+.control-select:hover {
+  border-color: var(--border-strong);
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: var(--neural-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  font-size: var(--text-xs);
+}
+
+.control-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 4px;
+}
+
+.preview-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.preview-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--neural-cyan);
+  font-weight: 600;
+}
+
+.control-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Enhanced Button Styles */
+.btn-icon {
+  font-size: 1.2em;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.btn-text {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.btn-neural {
+  background: transparent;
+  border-color: var(--neural-cyan);
+  color: var(--neural-cyan);
+}
+
+.btn-neural:hover:not(:disabled) {
+  background: var(--neural-cyan);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.btn-clinical {
+  background: transparent;
+  border-color: var(--clinical-normal);
+  color: var(--clinical-normal);
+}
+
+.btn-clinical:hover:not(:disabled) {
+  background: var(--clinical-normal);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-green);
+  transform: translateY(-2px);
+}
+
+
+/* ============================================
+   24. OSCILLOSCOPE CARD (Enhanced - ECG Signal)
+   ============================================ */
+
+.oscilloscope-card {
+  background: var(--gradient-card);
+}
+
+.oscilloscope-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.oscilloscope-metadata {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.metadata-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.metadata-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--neural-cyan);
+  font-weight: 700;
+}
+
+.oscilloscope-wrapper {
+  position: relative;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--border-moderate);
+  border-radius: 8px;
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+/* Grid pattern overlay */
+.oscilloscope-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 20px,
+    rgba(0, 217, 255, 0.03) 20px,
+    rgba(0, 217, 255, 0.03) 21px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.plot-oscilloscope {
+  width: 100%;
+  height: 400px;
+  position: relative;
+  z-index: 2;
+}
+
+
+/* ============================================
+   25. SPIKE MONITOR (Enhanced - HERO ELEMENT)
+   ============================================ */
+
+.spike-monitor-card {
+  background: var(--gradient-card);
+  border: 2px solid var(--border-moderate);
+}
+
+.spike-monitor-card:hover {
+  border-color: var(--border-glow);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(0, 217, 255, 0.15);
+}
+
+.spike-monitor-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.title-badge {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--neural-purple);
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.spike-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.stat-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-xl);
+  color: var(--neural-cyan);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+.spike-monitor-wrapper {
+  position: relative;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--neural-cyan);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow:
+    inset 0 0 20px rgba(0, 217, 255, 0.1),
+    var(--glow-cyan);
+}
+
+/* Grid pattern overlay for spike monitor */
+.spike-monitor-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 217, 255, 0.02) 10px,
+      rgba(0, 217, 255, 0.02) 11px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 10px,
+      rgba(0, 217, 255, 0.02) 10px,
+      rgba(0, 217, 255, 0.02) 11px
+    );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.plot-spike-raster {
+  width: 100%;
+  height: 500px;
+  position: relative;
+  z-index: 2;
+}
+
+.spike-overlay {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+.spike-legend {
+  background: rgba(10, 14, 26, 0.9);
+  border: 1px solid var(--border-moderate);
+  border-radius: 6px;
+  padding: 0.75rem;
+  backdrop-filter: blur(10px);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-marker.active {
+  background: var(--neural-cyan);
+  box-shadow: var(--glow-cyan);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.legend-marker.silent {
+  background: var(--border-moderate);
+}
+
+.legend-text {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+
+/* ============================================
+   26. RESULTS DASHBOARD (Enhanced - Clinical Analysis)
+   ============================================ */
+
+.results-dashboard {
+  background: var(--gradient-card);
+  border: 2px solid var(--clinical-info);
+  animation: slideUp var(--duration-slow) var(--ease-out);
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.results-timestamp {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timestamp-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.timestamp-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.results-primary {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.classification-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--border-moderate);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.classification-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+}
+
+.classification-value {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 20px currentColor;
+  animation: slideUp var(--duration-slow) var(--ease-spring);
+}
+
+.classification-value.normal {
+  color: var(--clinical-normal);
+}
+
+.classification-value.arrhythmia {
+  color: var(--clinical-critical);
+}
+
+.classification-confidence {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.confidence-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.confidence-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--neural-cyan);
+}
+
+.metrics-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.metric-box {
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.metric-box-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-bottom: 0.5rem;
+}
+
+.metric-box-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--neural-cyan);
+}
+
+.probability-section {
+  margin-bottom: 1.5rem;
+}
+
+.section-subtitle {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+
+.prob-bar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.prob-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prob-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.prob-bar-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.prob-bar-percentage {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-accent);
+}
+
+.prob-bar-track {
+  height: 32px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-moderate);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 16px;
+  transition: width var(--duration-slow) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.prob-bar-fill.normal {
+  background: linear-gradient(90deg, var(--clinical-normal), var(--neural-teal));
+}
+
+.prob-bar-fill.arrhythmia {
+  background: linear-gradient(90deg, var(--clinical-critical), #ff6b6b);
+}
+
+.prob-bar-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: barShimmer 2s ease-in-out infinite;
+}
+
+@keyframes barShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.clinical-note {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+}
+
+.note-icon {
+  font-size: 1.2em;
+}
+
+.note-text {
+  font-family: var(--font-secondary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+
+/* ============================================
+   27. PERFORMANCE GRID (Enhanced - System Performance)
+   ============================================ */
+
+.performance-grid {
+  background: var(--gradient-card);
+}
+
+.performance-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.performance-item {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-moderate);
+  border-radius: 8px;
+  padding: 1.5rem;
+  transition: all var(--duration-base);
+}
+
+.performance-item:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.1);
+  transform: translateY(-4px);
+}
+
+.performance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.performance-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.performance-badge {
+  font-family: var(--font-primary);
+  font-size: 0.65rem;
+  color: var(--neural-purple);
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.performance-value {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--neural-cyan);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+}
+
+.performance-detail {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-top: 0.5rem;
+}
+
+.performance-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comparison-bar {
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  transition: width var(--duration-slow);
+}
+
+.comparison-bar.snn {
+  background: var(--clinical-normal);
+  box-shadow: var(--glow-green);
+}
+
+.comparison-bar.cnn {
+  background: var(--border-strong);
+}
+
+.comparison-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: white;
+}
+
+.sparsity-indicator {
+  height: 8px;
+  background: var(--border-moderate);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sparsity-fill {
+  height: 100%;
+  background: var(--gradient-accent);
+  border-radius: 4px;
+  transition: width var(--duration-slow);
+}
+
+
+/* ============================================
+   28. NEURAL FOOTER (Enhanced - System Attribution)
+   ============================================ */
+
+.neural-footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  padding: 1.5rem 0;
+  margin-top: 4rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-left,
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-text {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.footer-divider {
+  color: var(--border-moderate);
+}
+
+.footer-tech {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 4px;
+}
+
+
+/* ============================================
+   29. RESPONSIVE OVERRIDES FOR PHASE 2
+   ============================================ */
+
+@media (max-width: 768px) {
+  .neural-title {
+    font-size: var(--text-2xl);
+  }
+
+  .status-grid-enhanced {
+    grid-template-columns: 1fr;
+  }
+
+  .control-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .oscilloscope-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .results-primary {
+    grid-template-columns: 1fr;
+  }
+
+  .classification-value {
+    font-size: var(--text-3xl);
+  }
+
+  .performance-items {
+    grid-template-columns: 1fr;
+  }
+
+  .performance-value {
+    font-size: var(--text-3xl);
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-left,
+  .footer-right {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .neural-pulse-icon {
+    display: none;
+  }
+
+  .neural-version {
+    display: none;
+  }
+
+  .oscilloscope-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .spike-overlay {
+    position: static;
+    margin-top: 1rem;
+  }
+}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CortexCore - Demo</title>
+    <title>CortexCore - Neural Observatory</title>
 
     <!-- Plotly for visualizations -->
     <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
@@ -12,125 +12,326 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
+    <!-- ============================================ -->
+    <!-- Header: Neural Observatory Control -->
+    <!-- ============================================ -->
+    <header class="neural-header">
         <div class="container">
-            <h1>🧠 CortexCore</h1>
-            <p class="subtitle">Brain-inspired computing for medical diagnosis</p>
+            <div class="neural-title-group">
+                <div class="neural-pulse-icon">
+                    <span class="pulse-dot"></span>
+                    <span class="pulse-dot"></span>
+                    <span class="pulse-dot"></span>
+                </div>
+                <h1 class="neural-title">CORTEXCORE</h1>
+                <div class="neural-version">v2.0</div>
+            </div>
+            <p class="neural-subtitle">
+                <span class="subtitle-label">SYSTEM:</span>
+                Neuromorphic Signal Processing & Classification
+            </p>
         </div>
     </header>
 
+    <!-- ============================================ -->
     <!-- Main Content -->
+    <!-- ============================================ -->
     <main class="container">
-        <!-- Status Card -->
-        <div class="card">
-            <h2>System Status</h2>
-            <div class="status-grid">
-                <div class="status-item">
-                    <span class="status-label">Server:</span>
-                    <span class="status-badge success">Running</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Model:</span>
-                    <span id="model-status" class="status-badge warning">Loading...</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Device:</span>
-                    <span id="device-status" class="status-badge info">Unknown</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Controls Card -->
-        <div class="card">
-            <h2>Signal Generation</h2>
-            <div class="controls-grid">
-                <div class="control-group">
-                    <label for="condition-select">Condition:</label>
-                    <select id="condition-select" class="form-control">
-                        <option value="normal">Normal Sinus Rhythm</option>
-                        <option value="arrhythmia">Arrhythmia</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <button id="generate-btn" class="btn btn-primary">Generate ECG Sample</button>
-                    <button id="predict-btn" class="btn btn-success" disabled>Run Prediction</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ECG Signal Visualization -->
-        <div class="card">
-            <h2>ECG Signal</h2>
-            <div id="ecg-plot" class="plot-container"></div>
-        </div>
-
-        <!-- Spike Raster Visualization -->
-        <div class="card">
-            <h2>Spike Pattern (Neuromorphic Encoding)</h2>
-            <div id="spike-plot" class="plot-container"></div>
-        </div>
-
-        <!-- Prediction Results -->
-        <div class="card" id="results-card" style="display: none;">
-            <h2>Prediction Results</h2>
-            <div class="results-grid">
-                <div class="result-item">
-                    <h3>Classification</h3>
-                    <div id="prediction-class" class="result-value large">-</div>
-                </div>
-                <div class="result-item">
-                    <h3>Confidence</h3>
-                    <div id="prediction-confidence" class="result-value">-</div>
-                </div>
-                <div class="result-item">
-                    <h3>Inference Time</h3>
-                    <div id="inference-time" class="result-value">-</div>
-                </div>
-            </div>
-            <div class="probability-bars">
-                <h3>Class Probabilities</h3>
-                <div class="prob-bar">
-                    <span class="prob-label">Normal:</span>
-                    <div class="prob-bar-bg">
-                        <div id="prob-normal" class="prob-bar-fill" style="width: 0%"></div>
+        <!-- ============================================ -->
+        <!-- Status Panel: Mission Control -->
+        <!-- ============================================ -->
+        <div class="card status-panel">
+            <h2 class="card-title">
+                <span class="title-icon">⚡</span>
+                SYSTEM STATUS
+            </h2>
+            <div class="status-grid-enhanced">
+                <!-- Server Status -->
+                <div class="status-metric">
+                    <div class="metric-label">
+                        <span class="label-text">SERVER</span>
+                        <span class="label-indicator online"></span>
                     </div>
-                    <span id="prob-normal-text" class="prob-value">0%</span>
-                </div>
-                <div class="prob-bar">
-                    <span class="prob-label">Arrhythmia:</span>
-                    <div class="prob-bar-bg">
-                        <div id="prob-arrhythmia" class="prob-bar-fill arrhythmia" style="width: 0%"></div>
+                    <div class="metric-value">ONLINE</div>
+                    <div class="metric-graph">
+                        <div class="graph-bar" style="height: 95%"></div>
                     </div>
-                    <span id="prob-arrhythmia-text" class="prob-value">0%</span>
+                </div>
+
+                <!-- Model Status -->
+                <div class="status-metric">
+                    <div class="metric-label">
+                        <span class="label-text">MODEL</span>
+                        <span id="model-indicator" class="label-indicator loading"></span>
+                    </div>
+                    <div id="model-status" class="metric-value">LOADING...</div>
+                    <div class="metric-detail" id="model-arch">SimpleSNN</div>
+                </div>
+
+                <!-- Device Status -->
+                <div class="status-metric">
+                    <div class="metric-label">
+                        <span class="label-text">DEVICE</span>
+                        <span id="device-indicator" class="label-indicator"></span>
+                    </div>
+                    <div id="device-status" class="metric-value">-</div>
+                    <div class="metric-detail" id="device-memory">0 GB VRAM</div>
                 </div>
             </div>
         </div>
 
-        <!-- Performance Metrics -->
-        <div class="card">
-            <h2>Performance Metrics</h2>
-            <div class="metrics-grid">
-                <div class="metric-item">
-                    <div class="metric-label">Energy Efficiency</div>
-                    <div class="metric-value">60% <span class="metric-unit">vs CNN</span></div>
+        <!-- ============================================ -->
+        <!-- Controls: Neural Encoder Panel -->
+        <!-- ============================================ -->
+        <div class="card encoder-panel">
+            <h2 class="card-title">
+                <span class="title-icon">🎛️</span>
+                SIGNAL GENERATOR
+            </h2>
+
+            <div class="encoder-controls">
+                <div class="control-section">
+                    <label class="control-label">
+                        <span class="label-text">CONDITION</span>
+                        <span class="label-hint">Select target pattern</span>
+                    </label>
+                    <div class="control-select-wrapper">
+                        <select id="condition-select" class="control-select">
+                            <option value="normal">Normal Sinus Rhythm</option>
+                            <option value="arrhythmia">Cardiac Arrhythmia</option>
+                        </select>
+                        <div class="select-arrow">▼</div>
+                    </div>
+                    <div class="control-preview">
+                        <span class="preview-label">Expected:</span>
+                        <span id="condition-preview" class="preview-value">70 BPM, Low Noise</span>
+                    </div>
                 </div>
-                <div class="metric-item">
-                    <div class="metric-label">Model Accuracy</div>
-                    <div class="metric-value" id="model-accuracy">-</div>
+
+                <div class="control-actions">
+                    <button id="generate-btn" class="btn btn-neural">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">GENERATE SIGNAL</span>
+                    </button>
+                    <button id="predict-btn" class="btn btn-clinical" disabled>
+                        <span class="btn-icon">🔬</span>
+                        <span class="btn-text">RUN INFERENCE</span>
+                    </button>
                 </div>
-                <div class="metric-item">
-                    <div class="metric-label">Sparsity</div>
-                    <div class="metric-value">70% <span class="metric-unit">inactive</span></div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- ECG Visualization: Neural Signal Oscilloscope -->
+        <!-- ============================================ -->
+        <div class="card oscilloscope-card">
+            <div class="oscilloscope-header">
+                <h2 class="card-title">
+                    <span class="title-icon">📡</span>
+                    ECG SIGNAL
+                </h2>
+                <div class="oscilloscope-metadata">
+                    <span class="metadata-item">
+                        <span class="metadata-label">SR:</span>
+                        <span class="metadata-value">250 Hz</span>
+                    </span>
+                    <span class="metadata-item">
+                        <span class="metadata-label">DUR:</span>
+                        <span class="metadata-value">10.0 s</span>
+                    </span>
+                    <span class="metadata-item">
+                        <span class="metadata-label">PTS:</span>
+                        <span id="ecg-points" class="metadata-value">2500</span>
+                    </span>
+                </div>
+            </div>
+            <div class="oscilloscope-wrapper">
+                <div id="ecg-plot" class="plot-oscilloscope"></div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- Spike Raster: Neural Activity Monitor (HERO) -->
+        <!-- ============================================ -->
+        <div class="card spike-monitor-card">
+            <div class="spike-monitor-header">
+                <h2 class="card-title">
+                    <span class="title-icon">⚡</span>
+                    SPIKE RASTER
+                    <span class="title-badge">NEUROMORPHIC ENCODING</span>
+                </h2>
+                <div class="spike-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">TOTAL SPIKES:</span>
+                        <span id="total-spikes" class="stat-value">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">FIRING RATE:</span>
+                        <span id="firing-rate" class="stat-value">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">SPARSITY:</span>
+                        <span id="sparsity" class="stat-value">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="spike-monitor-wrapper">
+                <div id="spike-plot" class="plot-spike-raster"></div>
+                <div class="spike-overlay">
+                    <div class="spike-legend">
+                        <div class="legend-item">
+                            <div class="legend-marker active"></div>
+                            <span class="legend-text">Active Neuron</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-marker silent"></div>
+                            <span class="legend-text">Silent Neuron</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- Results: Clinical Analysis Dashboard -->
+        <!-- ============================================ -->
+        <div class="card results-dashboard" id="results-card" style="display: none;">
+            <div class="results-header">
+                <h2 class="card-title">
+                    <span class="title-icon">🔬</span>
+                    INFERENCE RESULTS
+                </h2>
+                <div class="results-timestamp">
+                    <span class="timestamp-label">COMPUTED:</span>
+                    <span id="inference-timestamp" class="timestamp-value">-</span>
+                </div>
+            </div>
+
+            <div class="results-primary">
+                <div class="classification-panel">
+                    <div class="classification-label">CLASSIFICATION</div>
+                    <div id="prediction-class" class="classification-value">-</div>
+                    <div class="classification-confidence">
+                        <span class="confidence-label">CONFIDENCE:</span>
+                        <span id="prediction-confidence" class="confidence-value">-</span>
+                    </div>
+                </div>
+
+                <div class="metrics-panel">
+                    <div class="metric-box">
+                        <div class="metric-box-label">INFERENCE TIME</div>
+                        <div id="inference-time" class="metric-box-value">-</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-box-label">SPIKES PROCESSED</div>
+                        <div id="spikes-processed" class="metric-box-value">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="probability-section">
+                <h3 class="section-subtitle">CLASS PROBABILITIES</h3>
+                <div class="prob-bar-group">
+                    <div class="prob-bar-item">
+                        <div class="prob-bar-header">
+                            <span class="prob-bar-label">NORMAL</span>
+                            <span id="prob-normal-text" class="prob-bar-percentage">0%</span>
+                        </div>
+                        <div class="prob-bar-track">
+                            <div id="prob-normal" class="prob-bar-fill normal" style="width: 0%">
+                                <div class="prob-bar-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prob-bar-item">
+                        <div class="prob-bar-header">
+                            <span class="prob-bar-label">ARRHYTHMIA</span>
+                            <span id="prob-arrhythmia-text" class="prob-bar-percentage">0%</span>
+                        </div>
+                        <div class="prob-bar-track">
+                            <div id="prob-arrhythmia" class="prob-bar-fill arrhythmia" style="width: 0%">
+                                <div class="prob-bar-glow"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clinical-note">
+                <span class="note-icon">ℹ️</span>
+                <span class="note-text">Results are for research purposes only. Not for clinical diagnosis.</span>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- Performance Metrics: System Performance Grid -->
+        <!-- ============================================ -->
+        <div class="card performance-grid">
+            <h2 class="card-title">
+                <span class="title-icon">⚡</span>
+                NEUROMORPHIC ADVANTAGES
+            </h2>
+
+            <div class="performance-items">
+                <div class="performance-item">
+                    <div class="performance-header">
+                        <span class="performance-label">ENERGY EFFICIENCY</span>
+                        <span class="performance-badge">vs CNN</span>
+                    </div>
+                    <div class="performance-value">60%</div>
+                    <div class="performance-comparison">
+                        <div class="comparison-bar snn" style="width: 60%">
+                            <span class="comparison-label">SNN</span>
+                        </div>
+                        <div class="comparison-bar cnn" style="width: 100%">
+                            <span class="comparison-label">CNN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="performance-item">
+                    <div class="performance-header">
+                        <span class="performance-label">MODEL ACCURACY</span>
+                        <span id="accuracy-badge" class="performance-badge">TEST SET</span>
+                    </div>
+                    <div id="model-accuracy" class="performance-value">-</div>
+                    <div class="performance-detail">
+                        Target: 92% | MVP: 85%
+                    </div>
+                </div>
+
+                <div class="performance-item">
+                    <div class="performance-header">
+                        <span class="performance-label">NETWORK SPARSITY</span>
+                        <span class="performance-badge">INACTIVE</span>
+                    </div>
+                    <div class="performance-value">70%</div>
+                    <div class="sparsity-indicator">
+                        <div class="sparsity-fill" style="width: 70%"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
+    <!-- ============================================ -->
+    <!-- Footer: System Attribution -->
+    <!-- ============================================ -->
+    <footer class="neural-footer">
         <div class="container">
-            <p>Built with ❤️ using Spiking Neural Networks | Powered by PyTorch & snnTorch</p>
+            <div class="footer-content">
+                <div class="footer-left">
+                    <span class="footer-text">CORTEXCORE</span>
+                    <span class="footer-divider">|</span>
+                    <span class="footer-text">Neuromorphic Signal Processing</span>
+                </div>
+                <div class="footer-right">
+                    <span class="footer-tech">PyTorch</span>
+                    <span class="footer-tech">snnTorch</span>
+                    <span class="footer-tech">Flask</span>
+                </div>
+            </div>
         </div>
     </footer>
 
