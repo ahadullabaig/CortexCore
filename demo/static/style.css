@@ -2147,3 +2147,621 @@ a:focus-visible {
     margin-top: 1rem;
   }
 }
+
+
+/* ============================================
+   PHASE 3: ANIMATION & MOTION SYSTEM
+   ============================================ */
+
+/* ============================================
+   30. PAGE ENTRANCE ANIMATIONS
+   ============================================ */
+
+/* Fade in from top (for header) */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in from bottom (for footer) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in from left (for scroll triggers) */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade in from right (for scroll triggers) */
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scale in from center (for modals/highlights) */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Apply entrance animations to header */
+.neural-header {
+  animation: fadeInDown var(--duration-slow) var(--ease-out);
+}
+
+/* Apply entrance animations to footer */
+.neural-footer {
+  animation: fadeInUp var(--duration-slow) var(--ease-out);
+  animation-delay: 600ms;
+  animation-fill-mode: backwards;
+}
+
+
+/* ============================================
+   31. BUTTON RIPPLE EFFECT & MICRO-INTERACTIONS
+   ============================================ */
+
+/* Ripple effect keyframe */
+@keyframes ripple {
+  from {
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+  }
+  to {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+  }
+}
+
+/* Enhanced button with ripple container */
+.btn {
+  will-change: transform;
+}
+
+/* Ripple overlay (created dynamically by JavaScript) */
+.btn .ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: ripple 600ms ease-out;
+}
+
+/* Enhanced hover state with scale */
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Active state with slight scale down */
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--duration-instant);
+}
+
+/* Card hover enhancement with lift and scale */
+.card:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+
+/* ============================================
+   32. INPUT FOCUS ANIMATIONS
+   ============================================ */
+
+/* Focus glow animation */
+@keyframes focusGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(0, 217, 255, 0.2);
+  }
+}
+
+/* Enhanced focus state with scale and glow */
+.form-control:focus,
+.control-select:focus {
+  transform: scale(1.01);
+  animation: focusGlow 1.5s ease-in-out infinite;
+}
+
+/* Select dropdown open animation */
+.control-select {
+  transition: all var(--duration-base), transform var(--duration-fast);
+}
+
+
+/* ============================================
+   33. SCROLL-TRIGGERED ANIMATION CLASSES
+   ============================================ */
+
+/* Base class for scroll animations (hidden initially) */
+.animate-on-scroll {
+  opacity: 0;
+  transition: none;
+}
+
+/* Animated state (applied by JavaScript when in viewport) */
+.animate-on-scroll.animated {
+  opacity: 1;
+}
+
+/* Fade in up variant */
+.animate-on-scroll.fade-in-up {
+  transform: translateY(30px);
+}
+
+.animate-on-scroll.fade-in-up.animated {
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Fade in left variant */
+.animate-on-scroll.fade-in-left {
+  transform: translateX(-30px);
+}
+
+.animate-on-scroll.fade-in-left.animated {
+  animation: fadeInLeft var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Fade in right variant */
+.animate-on-scroll.fade-in-right {
+  transform: translateX(30px);
+}
+
+.animate-on-scroll.fade-in-right.animated {
+  animation: fadeInRight var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Scale in variant */
+.animate-on-scroll.scale-in {
+  transform: scale(0.9);
+}
+
+.animate-on-scroll.scale-in.animated {
+  animation: scaleIn var(--duration-slow) var(--ease-spring) forwards;
+}
+
+
+/* ============================================
+   34. LOADING STATE ANIMATIONS
+   ============================================ */
+
+/* Spinner rotation */
+@keyframes spinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Loading spinner component */
+.loading-spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-moderate);
+  border-top-color: var(--neural-cyan);
+  border-radius: 50%;
+  animation: spinner 0.8s linear infinite;
+}
+
+/* Small spinner variant */
+.loading-spinner.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+/* Error shake animation */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Error state class */
+.error-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Success checkmark animation */
+@keyframes checkmark {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* Success checkmark SVG styling */
+.checkmark-svg {
+  stroke-dasharray: 100;
+  animation: checkmark 0.6s ease-in-out forwards;
+}
+
+
+/* ============================================
+   35. AMBIENT BACKGROUND EFFECTS
+   ============================================ */
+
+/* Floating particles container */
+.neural-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* Float animation for particles */
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(10px, -25px) scale(1.1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-5px, -50px) scale(0.9);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(-15px, -75px) scale(1.05);
+    opacity: 0.4;
+  }
+}
+
+/* Individual particle styling */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--neural-cyan);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: float linear infinite;
+  box-shadow: 0 0 10px var(--neural-cyan);
+}
+
+/* Varied particle sizes */
+.particle.small {
+  width: 2px;
+  height: 2px;
+}
+
+.particle.large {
+  width: 6px;
+  height: 6px;
+}
+
+/* Grid scan effect */
+@keyframes gridScan {
+  from {
+    transform: translateY(-100vh);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Grid scanner line */
+.grid-scanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--neural-cyan) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.5;
+  animation: gridScan 15s linear infinite;
+  box-shadow: 0 0 20px var(--neural-cyan);
+}
+
+/* Gradient shift for backgrounds */
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Animated background for special cards */
+.gradient-animated {
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* Pulsing glow on accent borders */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--neural-cyan);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--neural-cyan), 0 0 40px rgba(0, 217, 255, 0.3);
+  }
+}
+
+/* Glow accent class */
+.glow-accent {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+/* Apply glow to spike monitor */
+.spike-monitor-wrapper {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+
+/* ============================================
+   36. NUMBER COUNTER ANIMATIONS
+   ============================================ */
+
+/* Counter digit animation helper */
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated counter class */
+.counter-animated {
+  animation: countUp var(--duration-base) var(--ease-spring);
+}
+
+
+/* ============================================
+   37. DATA VISUALIZATION ANIMATIONS
+   ============================================ */
+
+/* Staggered data point reveal */
+@keyframes dataReveal {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* SVG path drawing animation */
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Line drawing class for SVG paths */
+.line-draw {
+  stroke-dasharray: 1000;
+  animation: drawLine 2s ease-out forwards;
+}
+
+/* Enhanced probability bar entrance */
+.prob-bar-fill {
+  animation: slideUp var(--duration-slow) var(--ease-spring);
+}
+
+
+/* ============================================
+   38. PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* GPU acceleration for frequently animated elements */
+.btn,
+.card,
+.form-control,
+.control-select,
+.status-metric,
+.result-item,
+.metric-item,
+.performance-item {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Reduce will-change after animation completes */
+.animated-complete {
+  will-change: auto;
+}
+
+
+/* ============================================
+   39. MOBILE ANIMATION OPTIMIZATIONS
+   ============================================ */
+
+/* Disable heavy animations on mobile for performance */
+@media (max-width: 768px) {
+  /* Disable floating particles on mobile */
+  .neural-particles {
+    display: none;
+  }
+
+  /* Disable grid scanner on mobile */
+  .grid-scanner {
+    display: none;
+  }
+
+  /* Simplify hover effects on touch devices */
+  @media (hover: none) {
+    .btn:hover:not(:disabled) {
+      transform: translateY(0) scale(1);
+    }
+
+    .card:hover {
+      transform: translateY(0) scale(1);
+    }
+
+    .status-metric:hover,
+    .result-item:hover,
+    .metric-item:hover,
+    .performance-item:hover {
+      transform: translateY(0);
+    }
+  }
+
+  /* Reduce animation complexity */
+  .particle {
+    animation-duration: 8s;
+  }
+
+  /* Faster transitions on mobile */
+  * {
+    transition-duration: calc(var(--duration-base) * 0.7) !important;
+  }
+}
+
+
+/* ============================================
+   40. LOW-END DEVICE OPTIMIZATIONS
+   ============================================ */
+
+/* Detect low-end devices via JavaScript and apply this class to body */
+.low-end-device .neural-particles,
+.low-end-device .grid-scanner,
+.low-end-device .particle,
+.low-end-device .glow-accent,
+.low-end-device .gradient-animated {
+  display: none !important;
+  animation: none !important;
+}
+
+.low-end-device .spike-monitor-wrapper {
+  animation: none;
+}
+
+.low-end-device .prob-bar-glow {
+  animation: none;
+  display: none;
+}
+
+
+/* ============================================
+   41. ACCESSIBILITY - ENHANCED REDUCED MOTION
+   ============================================ */
+
+/* Comprehensive reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  /* Override all animations */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Disable floating particles */
+  .neural-particles,
+  .grid-scanner,
+  .particle {
+    display: none !important;
+  }
+
+  /* Remove transform transitions */
+  .btn:hover,
+  .card:hover,
+  .status-metric:hover,
+  .result-item:hover,
+  .metric-item:hover,
+  .performance-item:hover {
+    transform: none !important;
+  }
+
+  /* Keep focus indicators visible but static */
+  .form-control:focus,
+  .control-select:focus {
+    animation: none !important;
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.3) !important;
+  }
+
+  /* Disable shimmer effects */
+  .prob-bar-glow {
+    display: none !important;
+  }
+
+  /* Disable pulsing indicators (but keep color) */
+  .status-badge.success::before,
+  .status-badge.warning::before,
+  .label-indicator.online,
+  .label-indicator.loading,
+  .legend-marker.active {
+    animation: none !important;
+  }
+}
