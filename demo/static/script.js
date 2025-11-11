@@ -10,12 +10,470 @@
 // Global State
 // ============================================
 
+// Legacy global variables (will be migrated to AppState)
 let currentSignal = null;
 let currentSpikes = null;
 
+// Animation Management State
+const animationState = {
+    particles: [],
+    activeTimeouts: [],
+    activeAnimationFrames: [],
+    isInitialized: false
+};
+
+// Spike Array Buffer Configuration (memory leak prevention)
+const SPIKE_BUFFER_CONFIG = {
+    MAX_POINTS: 10000, // Maximum points to render (prevents unbounded growth)
+    BATCH_SIZE: 40,    // Number of batches for progressive reveal
+    ANIMATION_DURATION: 1500 // Animation duration in ms
+};
+
 // ============================================
-// Initialization
+// PHASE 4: Centralized State Management System
 // ============================================
+
+/**
+ * Application State Management
+ *
+ * Provides:
+ * - Centralized state storage
+ * - Type validation
+ * - Pub/sub pattern for state changes
+ * - State history (for debugging/undo)
+ * - Immutability enforcement
+ */
+const AppState = {
+    // Internal state storage (private)
+    _state: {
+        // Model & Device
+        model: {
+            loaded: false,
+            accuracy: null,
+            architecture: null,
+            device: 'unknown'
+        },
+
+        // Signal Data
+        signal: {
+            data: null,
+            condition: null,
+            samplingRate: 250,
+            duration: 10
+        },
+
+        // Spike Encoding
+        spikes: {
+            data: null,
+            numNeurons: 0,
+            numSteps: 0,
+            totalSpikes: 0,
+            firingRate: 0,
+            sparsity: 0
+        },
+
+        // Prediction Results
+        prediction: {
+            className: null,
+            confidence: 0,
+            probabilities: [],
+            inferenceTime: 0,
+            timestamp: null
+        },
+
+        // UI State
+        ui: {
+            isGenerating: false,
+            isPredicting: false,
+            resultsVisible: false,
+            selectedCondition: 'normal'
+        }
+    },
+
+    // Subscribers (for pub/sub pattern)
+    _subscribers: {},
+
+    // State history (for debugging, max 10 states)
+    _history: [],
+    _maxHistorySize: 10,
+
+    /**
+     * Get current state (immutable copy)
+     */
+    getState(path = null) {
+        if (path) {
+            // Get nested property (e.g., 'model.loaded')
+            return this._getNestedProperty(this._state, path);
+        }
+        // Return deep copy of entire state
+        return JSON.parse(JSON.stringify(this._state));
+    },
+
+    /**
+     * Update state (with validation and pub/sub)
+     */
+    setState(path, value) {
+        const oldValue = this._getNestedProperty(this._state, path);
+
+        // Validate state change
+        if (!this._validateStateChange(path, value)) {
+            console.error(`❌ Invalid state change: ${path} = ${value}`);
+            return false;
+        }
+
+        // Save to history
+        this._addToHistory(path, oldValue, value);
+
+        // Update state
+        this._setNestedProperty(this._state, path, value);
+
+        // Notify subscribers
+        this._notifySubscribers(path, value, oldValue);
+
+        console.log(`🔄 State updated: ${path} =`, value);
+        return true;
+    },
+
+    /**
+     * Subscribe to state changes
+     * @param {string} path - State path to watch (e.g., 'model.loaded')
+     * @param {function} callback - Function to call on change
+     * @returns {function} Unsubscribe function
+     */
+    subscribe(path, callback) {
+        if (!this._subscribers[path]) {
+            this._subscribers[path] = [];
+        }
+
+        this._subscribers[path].push(callback);
+
+        console.log(`👂 Subscribed to: ${path}`);
+
+        // Return unsubscribe function
+        return () => {
+            this._subscribers[path] = this._subscribers[path].filter(cb => cb !== callback);
+            console.log(`👋 Unsubscribed from: ${path}`);
+        };
+    },
+
+    /**
+     * Reset state to initial values
+     */
+    reset() {
+        const initialState = {
+            model: { loaded: false, accuracy: null, architecture: null, device: 'unknown' },
+            signal: { data: null, condition: null, samplingRate: 250, duration: 10 },
+            spikes: { data: null, numNeurons: 0, numSteps: 0, totalSpikes: 0, firingRate: 0, sparsity: 0 },
+            prediction: { className: null, confidence: 0, probabilities: [], inferenceTime: 0, timestamp: null },
+            ui: { isGenerating: false, isPredicting: false, resultsVisible: false, selectedCondition: 'normal' }
+        };
+
+        this._state = initialState;
+        this._history = [];
+        console.log('🔄 State reset to initial values');
+    },
+
+    /**
+     * Get state history (for debugging)
+     */
+    getHistory() {
+        return [...this._history];
+    },
+
+    // ===== Internal Helper Methods =====
+
+    _getNestedProperty(obj, path) {
+        return path.split('.').reduce((current, key) => current?.[key], obj);
+    },
+
+    _setNestedProperty(obj, path, value) {
+        const keys = path.split('.');
+        const lastKey = keys.pop();
+        const target = keys.reduce((current, key) => {
+            if (!current[key]) current[key] = {};
+            return current[key];
+        }, obj);
+        target[lastKey] = value;
+    },
+
+    _validateStateChange(path, value) {
+        // Type validation based on path
+        const validations = {
+            'model.loaded': (v) => typeof v === 'boolean',
+            'model.accuracy': (v) => v === null || typeof v === 'number',
+            'ui.isGenerating': (v) => typeof v === 'boolean',
+            'ui.isPredicting': (v) => typeof v === 'boolean',
+            'signal.data': (v) => v === null || Array.isArray(v),
+            'spikes.totalSpikes': (v) => typeof v === 'number' && v >= 0
+        };
+
+        const validator = validations[path];
+        if (validator && !validator(value)) {
+            return false;
+        }
+
+        return true;
+    },
+
+    _notifySubscribers(path, newValue, oldValue) {
+        // Notify exact path subscribers
+        if (this._subscribers[path]) {
+            this._subscribers[path].forEach(callback => {
+                try {
+                    callback(newValue, oldValue);
+                } catch (error) {
+                    console.error(`❌ Subscriber error for ${path}:`, error);
+                }
+            });
+        }
+
+        // Notify wildcard subscribers (e.g., 'model.*' matches 'model.loaded')
+        Object.keys(this._subscribers).forEach(subscribedPath => {
+            if (subscribedPath.endsWith('.*') && path.startsWith(subscribedPath.slice(0, -2))) {
+                this._subscribers[subscribedPath].forEach(callback => {
+                    try {
+                        callback(newValue, oldValue);
+                    } catch (error) {
+                        console.error(`❌ Wildcard subscriber error for ${subscribedPath}:`, error);
+                    }
+                });
+            }
+        });
+    },
+
+    _addToHistory(path, oldValue, newValue) {
+        this._history.push({
+            timestamp: Date.now(),
+            path,
+            oldValue,
+            newValue
+        });
+
+        // Keep history size limited
+        if (this._history.length > this._maxHistorySize) {
+            this._history.shift();
+        }
+    }
+};
+
+// Initialize state management
+console.log('🏗️ State management system initialized');
+
+// ============================================
+// PHASE 4: Error Boundaries & Retry Logic
+// ============================================
+
+/**
+ * Error Handler with Retry Logic
+ *
+ * Provides:
+ * - HTTP status code handling
+ * - Timeout management
+ * - Exponential backoff retry
+ * - User-friendly error messages
+ * - Toast notifications
+ */
+const ErrorHandler = {
+    // Configuration
+    config: {
+        defaultTimeout: 10000, // 10 seconds
+        maxRetries: 3,
+        baseRetryDelay: 1000, // 1 second
+        retryableStatuses: [408, 429, 500, 502, 503, 504] // HTTP status codes to retry
+    },
+
+    /**
+     * Enhanced fetch with timeout and retry logic
+     */
+    async fetchWithRetry(url, options = {}, retries = 0) {
+        const timeout = options.timeout || this.config.defaultTimeout;
+
+        try {
+            // Create abort controller for timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            // Add abort signal to options
+            const fetchOptions = {
+                ...options,
+                signal: controller.signal
+            };
+
+            // Make request
+            const response = await fetch(url, fetchOptions);
+            clearTimeout(timeoutId);
+
+            // Check HTTP status
+            if (!response.ok) {
+                return this._handleHTTPError(response, url, options, retries);
+            }
+
+            return response;
+
+        } catch (error) {
+            // Handle timeout
+            if (error.name === 'AbortError') {
+                return this._handleTimeout(url, options, retries);
+            }
+
+            // Handle network errors
+            return this._handleNetworkError(error, url, options, retries);
+        }
+    },
+
+    /**
+     * Handle HTTP errors (4xx, 5xx)
+     */
+    async _handleHTTPError(response, url, options, retries) {
+        const status = response.status;
+        const statusText = response.statusText;
+
+        console.error(`❌ HTTP ${status} error: ${url} - ${statusText}`);
+
+        // Check if retryable
+        if (this.config.retryableStatuses.includes(status) && retries < this.config.maxRetries) {
+            console.warn(`🔄 Retrying request (${retries + 1}/${this.config.maxRetries})...`);
+            await this._delay(this._calculateRetryDelay(retries));
+            return this.fetchWithRetry(url, options, retries + 1);
+        }
+
+        // Not retryable or max retries reached
+        const userMessage = this._getUserFriendlyMessage(status);
+        this.showToast(userMessage, 'error');
+
+        throw new Error(`HTTP ${status}: ${userMessage}`);
+    },
+
+    /**
+     * Handle timeout errors
+     */
+    async _handleTimeout(url, options, retries) {
+        console.error(`⏱️ Request timeout: ${url}`);
+
+        // Retry with exponential backoff
+        if (retries < this.config.maxRetries) {
+            console.warn(`🔄 Retrying request after timeout (${retries + 1}/${this.config.maxRetries})...`);
+            await this._delay(this._calculateRetryDelay(retries));
+            return this.fetchWithRetry(url, options, retries + 1);
+        }
+
+        // Max retries reached
+        this.showToast('Request timed out. Please check your connection and try again.', 'error');
+        throw new Error('Request timeout');
+    },
+
+    /**
+     * Handle network errors (connection failed, DNS failure, etc.)
+     */
+    async _handleNetworkError(error, url, options, retries) {
+        console.error(`🌐 Network error: ${url}`, error);
+
+        // Retry network errors
+        if (retries < this.config.maxRetries) {
+            console.warn(`🔄 Retrying request after network error (${retries + 1}/${this.config.maxRetries})...`);
+            await this._delay(this._calculateRetryDelay(retries));
+            return this.fetchWithRetry(url, options, retries + 1);
+        }
+
+        // Max retries reached
+        this.showToast('Network error. Please check your connection.', 'error');
+        throw error;
+    },
+
+    /**
+     * Calculate retry delay with exponential backoff
+     */
+    _calculateRetryDelay(retries) {
+        // Exponential backoff: 1s, 2s, 4s, 8s...
+        return this.config.baseRetryDelay * Math.pow(2, retries);
+    },
+
+    /**
+     * Delay helper for retry logic
+     */
+    _delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    /**
+     * Get user-friendly error message from HTTP status
+     */
+    _getUserFriendlyMessage(status) {
+        const messages = {
+            400: 'Invalid request. Please check your input.',
+            401: 'Authentication required. Please log in.',
+            403: 'Access denied.',
+            404: 'Resource not found. The server may be starting up.',
+            408: 'Request timeout. Please try again.',
+            429: 'Too many requests. Please wait a moment.',
+            500: 'Server error. Please try again later.',
+            502: 'Bad gateway. The server may be restarting.',
+            503: 'Service unavailable. Please try again in a moment.',
+            504: 'Gateway timeout. The server is taking too long to respond.'
+        };
+
+        return messages[status] || `Error ${status}. Please try again.`;
+    },
+
+    /**
+     * Toast Notification System
+     */
+    showToast(message, type = 'info') {
+        // Check if toast container exists
+        let container = document.getElementById('toast-container');
+
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        // Add icon based on type
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
+
+        toast.innerHTML = `
+            <span class="toast-icon">${icons[type] || icons.info}</span>
+            <span class="toast-message">${message}</span>
+            <button class="toast-close" aria-label="Close notification">&times;</button>
+        `;
+
+        // Add to container
+        container.appendChild(toast);
+
+        // Setup close button
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn.addEventListener('click', () => {
+            toast.classList.add('toast-removing');
+            setTimeout(() => toast.remove(), 300);
+        });
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.classList.add('toast-removing');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 5000);
+
+        // Animate in
+        setTimeout(() => toast.classList.add('toast-visible'), 10);
+
+        console.log(`📢 Toast: [${type}] ${message}`);
+    }
+};
+
+// Initialize error handler
+console.log('🛡️ Error handler initialized');
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🧠 CortexCore Demo initialized');
@@ -31,7 +489,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize empty plots
     initializePlots();
+
+    // Setup cleanup on page unload
+    window.addEventListener('beforeunload', cleanupAllAnimations);
 });
+
+// ============================================
+// Animation Cleanup Functions (Memory Leak Prevention)
+// ============================================
+
+/**
+ * Clear all active timeouts and animation frames
+ * Critical for preventing memory leaks
+ */
+function cleanupAllAnimations() {
+    // Cancel all setTimeout calls
+    animationState.activeTimeouts.forEach(id => clearTimeout(id));
+    animationState.activeTimeouts = [];
+
+    // Cancel all requestAnimationFrame calls
+    animationState.activeAnimationFrames.forEach(id => cancelAnimationFrame(id));
+    animationState.activeAnimationFrames = [];
+
+    console.log('🧹 Cleaned up all active animations');
+}
+
+/**
+ * Register timeout for cleanup tracking
+ */
+function managedSetTimeout(callback, delay) {
+    const id = setTimeout(() => {
+        callback();
+        // Remove from tracking after execution
+        const index = animationState.activeTimeouts.indexOf(id);
+        if (index > -1) {
+            animationState.activeTimeouts.splice(index, 1);
+        }
+    }, delay);
+
+    animationState.activeTimeouts.push(id);
+    return id;
+}
+
+/**
+ * Register animation frame for cleanup tracking
+ */
+function managedRequestAnimationFrame(callback) {
+    const id = requestAnimationFrame((time) => {
+        callback(time);
+        // Remove from tracking after execution
+        const index = animationState.activeAnimationFrames.indexOf(id);
+        if (index > -1) {
+            animationState.activeAnimationFrames.splice(index, 1);
+        }
+    });
+
+    animationState.activeAnimationFrames.push(id);
+    return id;
+}
 
 // ============================================
 // Event Listeners
@@ -61,8 +576,18 @@ function setupEventListeners() {
 
 async function checkHealth() {
     try {
-        const response = await fetch('/health');
+        // Use ErrorHandler for resilient fetching
+        const response = await ErrorHandler.fetchWithRetry('/health', {
+            timeout: 5000 // 5 second timeout for health checks
+        });
         const data = await response.json();
+
+        // Update state
+        AppState.setState('model.loaded', data.model.loaded);
+        AppState.setState('model.device', data.device);
+        if (data.model.val_acc && data.model.val_acc !== 'N/A') {
+            AppState.setState('model.accuracy', data.model.val_acc);
+        }
 
         // Update status badges
         const modelStatus = document.getElementById('model-status');
@@ -93,6 +618,9 @@ async function checkHealth() {
         const modelStatus = document.getElementById('model-status');
         modelStatus.textContent = 'Error';
         modelStatus.className = 'status-badge danger';
+
+        // Don't show toast for health check failures (silent)
+        // ErrorHandler already logged the error
     }
 }
 
@@ -105,7 +633,12 @@ async function generateSample() {
         generateBtn.disabled = true;
         generateBtn.textContent = 'Generating...';
 
-        const response = await fetch('/api/generate_sample', {
+        // CRITICAL: Clean up any ongoing animations before new generation
+        // This prevents memory leaks from accumulated animation frames
+        cleanupAllAnimations();
+
+        // Use ErrorHandler for resilient fetching with retry logic
+        const response = await ErrorHandler.fetchWithRetry('/api/generate_sample', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -115,6 +648,7 @@ async function generateSample() {
                 duration: 10,
                 sampling_rate: 250
             }),
+            timeout: 15000 // 15 second timeout for data generation
         });
 
         const data = await response.json();
@@ -134,11 +668,18 @@ async function generateSample() {
         // Enable prediction
         predictBtn.disabled = false;
 
+        // Show success notification
+        ErrorHandler.showToast('ECG signal generated successfully', 'success');
+
         console.log('✅ Sample generated:', data);
 
     } catch (error) {
         console.error('❌ Generation failed:', error);
-        alert('Failed to generate sample: ' + error.message);
+        // ErrorHandler already shows toast notification for fetch errors
+        // Only show toast for other types of errors
+        if (!error.message.includes('HTTP')) {
+            ErrorHandler.showToast(`Generation failed: ${error.message}`, 'error');
+        }
     } finally {
         generateBtn.disabled = false;
         generateBtn.textContent = 'Generate ECG Sample';
@@ -149,7 +690,8 @@ async function generateSpikes(signal) {
     try {
         // Measure spike encoding time
         const data = await measureVisualizationTime('spike-encoding', async () => {
-            const response = await fetch('/api/visualize_spikes', {
+            // Use ErrorHandler for resilient fetching with retry logic
+            const response = await ErrorHandler.fetchWithRetry('/api/visualize_spikes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -157,6 +699,7 @@ async function generateSpikes(signal) {
                 body: JSON.stringify({
                     signal: signal
                 }),
+                timeout: 10000 // 10 second timeout for spike encoding
             });
 
             return await response.json();
@@ -185,12 +728,17 @@ async function generateSpikes(signal) {
 
     } catch (error) {
         console.error('❌ Spike generation failed:', error);
+        // ErrorHandler already shows toast notification for fetch errors
+        // Only show toast for other types of errors
+        if (!error.message.includes('HTTP')) {
+            ErrorHandler.showToast(`Spike generation failed: ${error.message}`, 'error');
+        }
     }
 }
 
 async function runPrediction() {
     if (!currentSignal) {
-        alert('Please generate a sample first');
+        ErrorHandler.showToast('Please generate a sample first', 'warning');
         return;
     }
 
@@ -200,7 +748,8 @@ async function runPrediction() {
         predictBtn.disabled = true;
         predictBtn.textContent = 'Predicting...';
 
-        const response = await fetch('/api/predict', {
+        // Use ErrorHandler for resilient fetching with retry logic
+        const response = await ErrorHandler.fetchWithRetry('/api/predict', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -209,6 +758,7 @@ async function runPrediction() {
                 signal: currentSignal,
                 encode: true
             }),
+            timeout: 20000 // 20 second timeout for neural network inference
         });
 
         const data = await response.json();
@@ -219,11 +769,18 @@ async function runPrediction() {
 
         displayResults(data);
 
+        // Show success notification
+        ErrorHandler.showToast(`Classification: ${data.class_name} (${(data.confidence * 100).toFixed(1)}% confidence)`, 'success');
+
         console.log('✅ Prediction complete:', data);
 
     } catch (error) {
         console.error('❌ Prediction failed:', error);
-        alert('Prediction failed: ' + error.message);
+        // ErrorHandler already shows toast notification for fetch errors
+        // Only show toast for other types of errors
+        if (!error.message.includes('HTTP')) {
+            ErrorHandler.showToast(`Prediction failed: ${error.message}`, 'error');
+        }
     } finally {
         predictBtn.disabled = false;
         predictBtn.textContent = 'Run Prediction';
@@ -234,142 +791,285 @@ async function runPrediction() {
 // Visualization
 // ============================================
 
-function initializePlots() {
-    // Initialize empty ECG plot with dark theme
-    const ecgLayout = {
-        title: {
-            text: 'No signal generated yet',
-            font: {
-                family: 'JetBrains Mono, monospace',
-                color: '#b4bcd0'
-            }
-        },
-        xaxis: {
-            title: {
-                text: 'Sample',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            color: '#b4bcd0'
-        },
-        yaxis: {
-            title: {
-                text: 'Amplitude',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            color: '#b4bcd0'
-        },
-        plot_bgcolor: 'rgba(0, 0, 0, 0)',
-        paper_bgcolor: 'rgba(0, 0, 0, 0)',
-        margin: { t: 60, r: 20, b: 60, l: 70 },
-        font: {
-            family: 'JetBrains Mono, monospace',
-            color: '#b4bcd0'
-        }
-    };
-    Plotly.newPlot('ecg-plot', [], ecgLayout);
+// ============================================
+// PHASE 4: Dynamic Plotly Theme System
+// ============================================
 
-    // Initialize empty spike plot with dark theme
-    const spikeLayout = {
-        title: {
-            text: 'No spikes generated yet',
-            font: {
-                family: 'JetBrains Mono, monospace',
-                color: '#b4bcd0'
-            }
-        },
-        xaxis: {
-            title: {
-                text: 'Time Step',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            color: '#b4bcd0'
-        },
-        yaxis: {
-            title: {
-                text: 'Neuron Index',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            color: '#b4bcd0'
-        },
-        plot_bgcolor: 'rgba(0, 0, 0, 0)',
-        paper_bgcolor: 'rgba(0, 0, 0, 0)',
-        margin: { t: 60, r: 20, b: 60, l: 70 },
-        font: {
-            family: 'JetBrains Mono, monospace',
-            color: '#b4bcd0'
+/**
+ * Plotly Theme Configuration - Reads from CSS Variables
+ * This creates a centralized theme that stays in sync with CSS
+ */
+const PlotlyTheme = {
+    // Cache for CSS variables (populated on first access)
+    _cssVars: null,
+
+    /**
+     * Read CSS custom properties from document
+     * Cached for performance
+     */
+    getCSSVariables() {
+        if (!this._cssVars) {
+            const root = document.documentElement;
+            const computed = getComputedStyle(root);
+
+            this._cssVars = {
+                // Fonts
+                fontPrimary: computed.getPropertyValue('--font-primary').trim() || 'JetBrains Mono, monospace',
+
+                // Colors - Text
+                textPrimary: computed.getPropertyValue('--text-primary').trim() || '#e4e7ed',
+                textSecondary: computed.getPropertyValue('--text-secondary').trim() || '#b4bcd0',
+                textTertiary: computed.getPropertyValue('--text-tertiary').trim() || '#8b92a0',
+
+                // Colors - Accent
+                neuralCyan: computed.getPropertyValue('--neural-cyan').trim() || '#00d9ff',
+                neuralBlue: computed.getPropertyValue('--neural-blue').trim() || '#0088ff',
+                neuralPurple: computed.getPropertyValue('--neural-purple').trim() || '#a855f7',
+                neuralTeal: computed.getPropertyValue('--neural-teal').trim() || '#14b8a6',
+
+                // Colors - Clinical
+                clinicalNormal: computed.getPropertyValue('--clinical-normal').trim() || '#10b981',
+                clinicalCritical: computed.getPropertyValue('--clinical-critical').trim() || '#ef4444',
+                clinicalWarning: computed.getPropertyValue('--clinical-warning').trim() || '#f59e0b',
+                clinicalInfo: computed.getPropertyValue('--clinical-info').trim() || '#3b82f6',
+
+                // Backgrounds
+                bgPrimary: computed.getPropertyValue('--bg-primary').trim() || '#0a0e1a',
+                bgSecondary: computed.getPropertyValue('--bg-secondary').trim() || '#0f1419',
+
+                // Borders
+                borderSubtle: computed.getPropertyValue('--border-subtle').trim() || '#1f2937',
+            };
+
+            console.log('🎨 Plotly theme initialized with CSS variables:', this._cssVars);
         }
-    };
-    Plotly.newPlot('spike-plot', [], spikeLayout);
+
+        return this._cssVars;
+    },
+
+    /**
+     * Invalidate CSS variable cache
+     * Call this if CSS theme changes dynamically
+     */
+    invalidateCache() {
+        this._cssVars = null;
+        console.log('🔄 Plotly theme cache invalidated');
+    },
+
+    /**
+     * Generate base layout configuration
+     * Applies to all Plotly charts for consistency
+     */
+    getBaseLayout(customTitle = '') {
+        const vars = this.getCSSVariables();
+
+        return {
+            title: {
+                text: customTitle,
+                font: {
+                    family: vars.fontPrimary,
+                    color: vars.textSecondary,
+                    size: 16
+                }
+            },
+            plot_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent to show card background
+            paper_bgcolor: 'rgba(0, 0, 0, 0)', // Transparent
+            margin: { t: 60, r: 20, b: 60, l: 70 },
+            font: {
+                family: vars.fontPrimary,
+                color: vars.textSecondary,
+                size: 12
+            },
+            hoverlabel: {
+                bgcolor: vars.bgSecondary,
+                bordercolor: vars.neuralCyan,
+                font: {
+                    family: vars.fontPrimary,
+                    color: vars.textPrimary,
+                    size: 12
+                }
+            },
+            // Modebar (toolbar) styling
+            modebar: {
+                bgcolor: 'rgba(0, 0, 0, 0)',
+                color: vars.textTertiary,
+                activecolor: vars.neuralCyan
+            }
+        };
+    },
+
+    /**
+     * Generate axis configuration
+     */
+    getAxisConfig(title = '', options = {}) {
+        const vars = this.getCSSVariables();
+
+        return {
+            title: {
+                text: title,
+                font: {
+                    family: vars.fontPrimary,
+                    color: vars.textSecondary,
+                    size: 13
+                }
+            },
+            gridcolor: `rgba(180, 188, 208, 0.08)`, // Subtle grid
+            zerolinecolor: `rgba(180, 188, 208, 0.15)`, // Slightly more visible zero line
+            color: vars.textTertiary, // Tick labels
+            tickfont: {
+                family: vars.fontPrimary,
+                size: 11
+            },
+            ...options // Allow overrides
+        };
+    },
+
+    /**
+     * Get color for condition/classification
+     */
+    getConditionColor(condition) {
+        const vars = this.getCSSVariables();
+
+        const colorMap = {
+            'normal': vars.clinicalNormal,
+            'arrhythmia': vars.clinicalCritical,
+            'warning': vars.clinicalWarning,
+            'info': vars.clinicalInfo
+        };
+
+        return colorMap[condition.toLowerCase()] || vars.neuralCyan;
+    },
+
+    /**
+     * Get spike/neural activity color
+     */
+    getSpikeColor() {
+        const vars = this.getCSSVariables();
+        return vars.neuralPurple;
+    }
+};
+
+/**
+ * Wait for fonts to load before initializing Plotly
+ * Prevents FOUT (Flash of Unstyled Text) in charts
+ */
+async function waitForFonts() {
+    try {
+        // Check if document.fonts API is available
+        if ('fonts' in document) {
+            await document.fonts.ready;
+            console.log('✅ Fonts loaded, ready for Plotly rendering');
+        } else {
+            // Fallback: wait 100ms for fonts to load
+            console.warn('⚠️ document.fonts API not available, using fallback delay');
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    } catch (error) {
+        console.warn('⚠️ Font loading check failed:', error);
+    }
+}
+
+function initializePlots() {
+    // Wait for fonts before rendering
+    waitForFonts().then(() => {
+        // Get base theme configuration
+        const baseLayout = PlotlyTheme.getBaseLayout('No signal generated yet');
+
+        // Initialize empty ECG plot with dynamic theme
+        const ecgLayout = {
+            ...baseLayout,
+            title: {
+                ...baseLayout.title,
+                text: 'No signal generated yet'
+            },
+            xaxis: PlotlyTheme.getAxisConfig('Sample'),
+            yaxis: PlotlyTheme.getAxisConfig('Amplitude')
+        };
+
+        Plotly.newPlot('ecg-plot', [], ecgLayout, {
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d']
+        });
+
+        // Initialize empty spike plot with dynamic theme
+        const spikeLayout = {
+            ...baseLayout,
+            title: {
+                ...baseLayout.title,
+                text: 'No spikes generated yet'
+            },
+            xaxis: PlotlyTheme.getAxisConfig('Time Step'),
+            yaxis: PlotlyTheme.getAxisConfig('Neuron Index')
+        };
+
+        Plotly.newPlot('spike-plot', [], spikeLayout, {
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: ['lasso2d', 'select2d']
+        });
+
+        console.log('📊 Plotly charts initialized with dynamic CSS theme');
+    });
 }
 
 function plotECG(signal, condition) {
+    // Use PlotlyTheme to get dynamic colors from CSS variables
+    const conditionColor = PlotlyTheme.getConditionColor(condition);
+
     const trace = {
         y: signal,
         type: 'scatter',
         mode: 'lines',
-        name: condition,
+        name: condition.charAt(0).toUpperCase() + condition.slice(1),
         line: {
-            color: condition === 'normal' ? '#4caf50' : '#f44336',
-            width: 2
-        }
+            color: conditionColor,
+            width: 2.5,
+            shape: 'spline', // Smooth curve for more organic look
+            smoothing: 0.8
+        },
+        hovertemplate: '<b>Sample</b>: %{x}<br><b>Amplitude</b>: %{y:.3f}<extra></extra>'
     };
+
+    // Get base layout with dynamic theme
+    const baseLayout = PlotlyTheme.getBaseLayout(
+        `ECG Signal - ${condition.charAt(0).toUpperCase() + condition.slice(1)}`
+    );
 
     const layout = {
-        title: {
-            text: `ECG Signal - ${condition.charAt(0).toUpperCase() + condition.slice(1)}`,
-            font: {
-                family: 'JetBrains Mono, monospace',
-                color: '#b4bcd0'
-            }
-        },
-        xaxis: {
-            title: {
-                text: 'Sample',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
-            color: '#b4bcd0'
-        },
-        yaxis: {
-            title: {
-                text: 'Amplitude (normalized)',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
-            color: '#b4bcd0'
-        },
-        plot_bgcolor: 'rgba(0, 0, 0, 0)',
-        paper_bgcolor: 'rgba(0, 0, 0, 0)',
-        margin: { t: 60, r: 20, b: 60, l: 70 },
-        font: {
-            family: 'JetBrains Mono, monospace',
-            color: '#b4bcd0'
-        }
+        ...baseLayout,
+        xaxis: PlotlyTheme.getAxisConfig('Sample'),
+        yaxis: PlotlyTheme.getAxisConfig('Amplitude (normalized)'),
+        showlegend: false // Single trace, no need for legend
     };
 
-    Plotly.newPlot('ecg-plot', [trace], layout);
+    Plotly.newPlot('ecg-plot', [trace], layout, {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d']
+    });
 
     // Add progressive trace drawing animation for visual impact
     // This simulates the ECG being "drawn" in real-time
+    // PERFORMANCE FIX: Use Plotly.extendTraces for better performance
     const totalPoints = signal.length;
     const animationDuration = 2000; // 2 seconds total
-    const fps = 60; // Target 60 FPS
-    const totalFrames = (animationDuration / 1000) * fps;
-    const pointsPerFrame = Math.ceil(totalPoints / totalFrames);
-    const frameDelay = 1000 / fps;
+    const numBatches = 60; // 60 updates for smooth 30fps animation
+    const pointsPerBatch = Math.ceil(totalPoints / numBatches);
+    const delayPerBatch = animationDuration / numBatches;
 
-    let currentPoint = 0;
+    let currentBatch = 0;
+
+    // Initialize with empty data
+    Plotly.restyle('ecg-plot', {
+        y: [[]]
+    }, [0]);
 
     function drawNextSegment() {
-        currentPoint += pointsPerFrame;
-
-        if (currentPoint >= totalPoints) {
+        if (currentBatch >= numBatches) {
             // Final update with complete data
             Plotly.restyle('ecg-plot', {
                 y: [signal]
@@ -377,130 +1077,150 @@ function plotECG(signal, condition) {
             return;
         }
 
-        // Update with partial data (progressive reveal)
-        const partialSignal = signal.slice(0, currentPoint);
-        Plotly.restyle('ecg-plot', {
-            y: [partialSignal]
-        }, [0]);
+        const startIdx = currentBatch * pointsPerBatch;
+        const endIdx = Math.min(startIdx + pointsPerBatch, totalPoints);
+        const batchData = signal.slice(startIdx, endIdx);
 
-        // Continue animation
-        setTimeout(drawNextSegment, frameDelay);
-    }
-
-    // Start drawing animation after brief delay
-    setTimeout(drawNextSegment, 100);
-}
-
-function plotSpikes(spikeData) {
-    const trace = {
-        x: spikeData.spike_times,
-        y: spikeData.neuron_ids,
-        mode: 'markers',
-        type: 'scatter',
-        name: 'Spikes',
-        marker: {
-            color: '#667eea',
-            size: 5,
-            symbol: 'line-ns-open',
-            line: {
-                width: 2
-            }
-        }
-    };
-
-    const layout = {
-        title: {
-            text: `Spike Raster Plot - ${spikeData.spike_times.length} total spikes`,
-            font: {
-                family: 'JetBrains Mono, monospace',
-                color: '#b4bcd0'
-            }
-        },
-        xaxis: {
-            title: {
-                text: 'Time Step',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            range: [0, spikeData.num_steps],
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
-            color: '#b4bcd0'
-        },
-        yaxis: {
-            title: {
-                text: 'Neuron Index',
-                font: { family: 'JetBrains Mono, monospace', color: '#b4bcd0' }
-            },
-            range: [-1, spikeData.num_neurons],
-            gridcolor: 'rgba(180, 188, 208, 0.1)',
-            zerolinecolor: 'rgba(180, 188, 208, 0.2)',
-            color: '#b4bcd0'
-        },
-        plot_bgcolor: 'rgba(0, 0, 0, 0)',
-        paper_bgcolor: 'rgba(0, 0, 0, 0)',
-        margin: { t: 60, r: 20, b: 60, l: 70 },
-        font: {
-            family: 'JetBrains Mono, monospace',
-            color: '#b4bcd0'
-        }
-    };
-
-    Plotly.newPlot('spike-plot', [trace], layout);
-
-    // Add progressive reveal animation for temporal dynamics visualization
-    // Group spikes by time step
-    const spikesByTime = {};
-    for (let i = 0; i < spikeData.spike_times.length; i++) {
-        const timeStep = spikeData.spike_times[i];
-        if (!spikesByTime[timeStep]) {
-            spikesByTime[timeStep] = { times: [], neurons: [] };
-        }
-        spikesByTime[timeStep].times.push(timeStep);
-        spikesByTime[timeStep].neurons.push(spikeData.neuron_ids[i]);
-    }
-
-    const timeSteps = Object.keys(spikesByTime).map(Number).sort((a, b) => a - b);
-
-    // Progressive reveal: gradually show spikes based on their temporal order
-    // This creates a "firing" effect that shows neural dynamics
-    const animationDuration = 1500; // 1.5 seconds total
-    const numBatches = Math.min(timeSteps.length, 40); // Max 40 frames for smooth animation
-    const batchSize = Math.ceil(timeSteps.length / numBatches);
-    const delayPerBatch = animationDuration / numBatches;
-
-    let accumulatedX = [];
-    let accumulatedY = [];
-    let currentBatch = 0;
-
-    function revealNextBatch() {
-        if (currentBatch >= numBatches) return;
-
-        // Add spikes from current batch (time-ordered)
-        const startIdx = currentBatch * batchSize;
-        const endIdx = Math.min(startIdx + batchSize, timeSteps.length);
-
-        for (let i = startIdx; i < endIdx; i++) {
-            const timeStep = timeSteps[i];
-            const spikes = spikesByTime[timeStep];
-            accumulatedX.push(...spikes.times);
-            accumulatedY.push(...spikes.neurons);
-        }
-
-        // Update plot with accumulated spikes (smooth progressive reveal)
-        Plotly.restyle('spike-plot', {
-            x: [accumulatedX],
-            y: [accumulatedY]
+        // Use extendTraces for better performance
+        Plotly.extendTraces('ecg-plot', {
+            y: [batchData]
         }, [0]);
 
         currentBatch++;
 
         if (currentBatch < numBatches) {
-            setTimeout(revealNextBatch, delayPerBatch);
+            // Use managed timeout for cleanup tracking
+            managedSetTimeout(drawNextSegment, delayPerBatch);
+        }
+    }
+
+    // Start drawing animation after brief delay
+    managedSetTimeout(drawNextSegment, 100);
+}
+
+function plotSpikes(spikeData) {
+    // MEMORY LEAK FIX: Implement data subsampling if spike count exceeds buffer limit
+    const totalSpikes = spikeData.spike_times.length;
+    let displayData = { spike_times: spikeData.spike_times, neuron_ids: spikeData.neuron_ids };
+
+    if (totalSpikes > SPIKE_BUFFER_CONFIG.MAX_POINTS) {
+        console.warn(`⚠️ Spike count (${totalSpikes}) exceeds buffer limit (${SPIKE_BUFFER_CONFIG.MAX_POINTS}). Subsampling for performance.`);
+
+        // Subsample uniformly to stay within buffer limit
+        const step = Math.ceil(totalSpikes / SPIKE_BUFFER_CONFIG.MAX_POINTS);
+        displayData = {
+            spike_times: spikeData.spike_times.filter((_, idx) => idx % step === 0),
+            neuron_ids: spikeData.neuron_ids.filter((_, idx) => idx % step === 0)
+        };
+    }
+
+    // Use PlotlyTheme for consistent spike color
+    const spikeColor = PlotlyTheme.getSpikeColor();
+
+    const trace = {
+        x: displayData.spike_times,
+        y: displayData.neuron_ids,
+        mode: 'markers',
+        type: 'scatter',
+        name: 'Neural Spikes',
+        marker: {
+            color: spikeColor,
+            size: 5,
+            symbol: 'line-ns-open',
+            line: {
+                width: 2,
+                color: spikeColor
+            },
+            opacity: 0.9
+        },
+        hovertemplate: '<b>Time</b>: %{x}<br><b>Neuron</b>: %{y}<extra></extra>'
+    };
+
+    // Get base layout with dynamic theme
+    const baseLayout = PlotlyTheme.getBaseLayout(
+        `Spike Raster Plot - ${totalSpikes.toLocaleString()} spikes${totalSpikes > SPIKE_BUFFER_CONFIG.MAX_POINTS ? ' (subsampled)' : ''}`
+    );
+
+    const layout = {
+        ...baseLayout,
+        xaxis: PlotlyTheme.getAxisConfig('Time Step', {
+            range: [0, spikeData.num_steps]
+        }),
+        yaxis: PlotlyTheme.getAxisConfig('Neuron Index', {
+            range: [-1, spikeData.num_neurons]
+        }),
+        showlegend: false // Single trace, no need for legend
+    };
+
+    Plotly.newPlot('spike-plot', [trace], layout, {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d']
+    });
+
+    // Add progressive reveal animation for temporal dynamics visualization
+    // Group spikes by time step
+    const spikesByTime = {};
+    for (let i = 0; i < displayData.spike_times.length; i++) {
+        const timeStep = displayData.spike_times[i];
+        if (!spikesByTime[timeStep]) {
+            spikesByTime[timeStep] = { times: [], neurons: [] };
+        }
+        spikesByTime[timeStep].times.push(timeStep);
+        spikesByTime[timeStep].neurons.push(displayData.neuron_ids[i]);
+    }
+
+    const timeSteps = Object.keys(spikesByTime).map(Number).sort((a, b) => a - b);
+
+    // Progressive reveal: gradually show spikes based on their temporal order
+    // MEMORY LEAK FIX: Use Plotly.extendTraces instead of accumulating arrays
+    const numBatches = Math.min(timeSteps.length, SPIKE_BUFFER_CONFIG.BATCH_SIZE);
+    const batchSize = Math.ceil(timeSteps.length / numBatches);
+    const delayPerBatch = SPIKE_BUFFER_CONFIG.ANIMATION_DURATION / numBatches;
+
+    let currentBatch = 0;
+
+    // Initialize with empty data for progressive reveal
+    Plotly.restyle('spike-plot', {
+        x: [[]],
+        y: [[]]
+    }, [0]);
+
+    function revealNextBatch() {
+        if (currentBatch >= numBatches) return;
+
+        // Calculate batch data without accumulating in closure
+        const startIdx = currentBatch * batchSize;
+        const endIdx = Math.min(startIdx + batchSize, timeSteps.length);
+
+        const batchX = [];
+        const batchY = [];
+
+        for (let i = startIdx; i < endIdx; i++) {
+            const timeStep = timeSteps[i];
+            const spikes = spikesByTime[timeStep];
+            batchX.push(...spikes.times);
+            batchY.push(...spikes.neurons);
+        }
+
+        // Use extendTraces instead of restyle for better performance
+        // This appends data instead of replacing entire trace
+        Plotly.extendTraces('spike-plot', {
+            x: [batchX],
+            y: [batchY]
+        }, [0]);
+
+        currentBatch++;
+
+        if (currentBatch < numBatches) {
+            // Use managed timeout for cleanup tracking
+            managedSetTimeout(revealNextBatch, delayPerBatch);
         }
     }
 
     // Start progressive reveal after brief delay
-    setTimeout(revealNextBatch, 200);
+    managedSetTimeout(revealNextBatch, 200);
 }
 
 // ============================================
@@ -525,15 +1245,23 @@ function displayResults(results) {
     const inferenceTime = document.getElementById('inference-time');
     inferenceTime.textContent = `${results.inference_time_ms.toFixed(2)} ms`;
 
-    // Update probability bars
+    // Update probability bars WITH ARIA ATTRIBUTES (accessibility)
     if (results.probabilities && results.probabilities.length >= 2) {
         const probNormal = results.probabilities[0] * 100;
         const probArrhythmia = results.probabilities[1] * 100;
 
-        document.getElementById('prob-normal').style.width = `${probNormal}%`;
+        // Update normal probability bar
+        const normalBar = document.getElementById('prob-normal');
+        const normalTrack = normalBar.parentElement;
+        normalBar.style.width = `${probNormal}%`;
+        normalTrack.setAttribute('aria-valuenow', Math.round(probNormal));
         document.getElementById('prob-normal-text').textContent = `${probNormal.toFixed(1)}%`;
 
-        document.getElementById('prob-arrhythmia').style.width = `${probArrhythmia}%`;
+        // Update arrhythmia probability bar
+        const arrhythmiaBar = document.getElementById('prob-arrhythmia');
+        const arrhythmiaTrack = arrhythmiaBar.parentElement;
+        arrhythmiaBar.style.width = `${probArrhythmia}%`;
+        arrhythmiaTrack.setAttribute('aria-valuenow', Math.round(probArrhythmia));
         document.getElementById('prob-arrhythmia-text').textContent = `${probArrhythmia.toFixed(1)}%`;
     }
 
@@ -544,6 +1272,38 @@ function displayResults(results) {
 
     // Scroll to results
     resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Announce to screen readers (accessibility)
+    announceToScreenReader(
+        `Classification complete: ${results.class_name} with ${(results.confidence * 100).toFixed(1)}% confidence`
+    );
+}
+
+/**
+ * Announce message to screen readers using ARIA live region
+ * Phase 4: Accessibility enhancement
+ */
+function announceToScreenReader(message) {
+    // Create or get announcement container
+    let announcer = document.getElementById('aria-announcer');
+
+    if (!announcer) {
+        announcer = document.createElement('div');
+        announcer.id = 'aria-announcer';
+        announcer.className = 'sr-only'; // Screen reader only (visually hidden)
+        announcer.setAttribute('role', 'status');
+        announcer.setAttribute('aria-live', 'polite');
+        announcer.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(announcer);
+    }
+
+    // Clear previous announcement
+    announcer.textContent = '';
+
+    // Add new announcement after brief delay (ensures screen reader picks it up)
+    setTimeout(() => {
+        announcer.textContent = message;
+    }, 100);
 }
 
 // ============================================
@@ -596,8 +1356,9 @@ function initializeAnimationSystems() {
     setupButtonRipples();
 
     // 4. Create floating particles (if not low-end device)
+    // MEMORY OPTIMIZATION: Reduced from 25 to 15 particles
     if (!document.body.classList.contains('low-end-device')) {
-        createFloatingParticles(25); // 25 particles
+        createFloatingParticles(15); // 15 particles (reduced for performance)
     }
 
     // 5. Create grid scanner
@@ -726,6 +1487,10 @@ function setupButtonRipples() {
 // Floating Particles System
 // ============================================
 
+/**
+ * Create floating particles with proper lifecycle management
+ * MEMORY LEAK FIX: Store particle references for cleanup
+ */
 function createFloatingParticles(count) {
     // Create container if it doesn't exist
     let container = document.querySelector('.neural-particles');
@@ -736,8 +1501,8 @@ function createFloatingParticles(count) {
         document.body.appendChild(container);
     }
 
-    // Clear existing particles
-    container.innerHTML = '';
+    // Clear existing particles and their references
+    clearFloatingParticles();
 
     // Create particles
     for (let i = 0; i < count; i++) {
@@ -763,9 +1528,44 @@ function createFloatingParticles(count) {
         particle.style.animationDelay = (Math.random() * 5) + 's';
 
         container.appendChild(particle);
+
+        // Store reference for cleanup
+        animationState.particles.push(particle);
     }
 
-    console.log(`✨ Created ${count} floating particles`);
+    console.log(`✨ Created ${count} floating particles (optimized for performance)`);
+}
+
+/**
+ * Clear all floating particles and free memory
+ */
+function clearFloatingParticles() {
+    const container = document.querySelector('.neural-particles');
+
+    if (container) {
+        container.innerHTML = '';
+    }
+
+    // Clear particle references
+    animationState.particles = [];
+}
+
+/**
+ * Pause particle animations (called when tab is hidden)
+ */
+function pauseParticleAnimations() {
+    animationState.particles.forEach(particle => {
+        particle.style.animationPlayState = 'paused';
+    });
+}
+
+/**
+ * Resume particle animations (called when tab is visible)
+ */
+function resumeParticleAnimations() {
+    animationState.particles.forEach(particle => {
+        particle.style.animationPlayState = 'running';
+    });
 }
 
 
@@ -986,15 +1786,33 @@ function updatePerformanceMetrics(name, duration) {
 // Visibility Handler (Pause animations when tab inactive)
 // ============================================
 
+/**
+ * Pause heavy animations when tab is hidden (battery saving)
+ * MEMORY LEAK FIX: Target specific animations, not all children
+ */
 function setupVisibilityHandler() {
     document.addEventListener('visibilitychange', () => {
         if (document.hidden) {
-            // Pause heavy animations
-            document.body.style.animationPlayState = 'paused';
-            console.log('⏸️ Animations paused (tab inactive)');
+            // Pause particle animations specifically
+            pauseParticleAnimations();
+
+            // Pause grid scanner
+            const gridScanner = document.querySelector('.grid-scanner');
+            if (gridScanner) {
+                gridScanner.style.animationPlayState = 'paused';
+            }
+
+            console.log('⏸️ Heavy animations paused (tab inactive - saving battery)');
         } else {
-            // Resume animations
-            document.body.style.animationPlayState = 'running';
+            // Resume particle animations
+            resumeParticleAnimations();
+
+            // Resume grid scanner
+            const gridScanner = document.querySelector('.grid-scanner');
+            if (gridScanner) {
+                gridScanner.style.animationPlayState = 'running';
+            }
+
             console.log('▶️ Animations resumed (tab active)');
         }
     });

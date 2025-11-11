@@ -36,90 +36,106 @@
     <!-- ============================================ -->
     <!-- Main Content -->
     <!-- ============================================ -->
-    <main class="container">
+    <main class="container" role="main">
         <!-- ============================================ -->
         <!-- Status Panel: Mission Control -->
+        <!-- WCAG 2.1 AA: Added ARIA labels and roles for screen readers -->
         <!-- ============================================ -->
-        <div class="card status-panel">
-            <h2 class="card-title">
-                <span class="title-icon">⚡</span>
+        <section class="card status-panel" aria-labelledby="status-title">
+            <h2 id="status-title" class="card-title">
+                <span class="title-icon" aria-hidden="true">⚡</span>
                 SYSTEM STATUS
             </h2>
-            <div class="status-grid-enhanced">
+            <div class="status-grid-enhanced" role="group" aria-label="System status metrics">
                 <!-- Server Status -->
-                <div class="status-metric">
+                <div class="status-metric" role="status" aria-live="polite" aria-atomic="true">
                     <div class="metric-label">
                         <span class="label-text">SERVER</span>
-                        <span class="label-indicator online"></span>
+                        <span class="label-indicator online" role="img" aria-label="Server online"></span>
                     </div>
-                    <div class="metric-value">ONLINE</div>
-                    <div class="metric-graph">
+                    <div class="metric-value" aria-label="Server status">ONLINE</div>
+                    <div class="metric-graph" role="img" aria-label="Server health at 95 percent">
                         <div class="graph-bar" style="height: 95%"></div>
                     </div>
                 </div>
 
                 <!-- Model Status -->
-                <div class="status-metric">
+                <div class="status-metric" role="status" aria-live="polite" aria-atomic="true">
                     <div class="metric-label">
                         <span class="label-text">MODEL</span>
-                        <span id="model-indicator" class="label-indicator loading"></span>
+                        <span id="model-indicator" class="label-indicator loading" role="img" aria-label="Model loading"></span>
                     </div>
-                    <div id="model-status" class="metric-value">LOADING...</div>
-                    <div class="metric-detail" id="model-arch">SimpleSNN</div>
+                    <div id="model-status" class="metric-value" aria-label="Model status">LOADING...</div>
+                    <div class="metric-detail" id="model-arch" aria-label="Model architecture">SimpleSNN</div>
                 </div>
 
                 <!-- Device Status -->
-                <div class="status-metric">
+                <div class="status-metric" role="status" aria-live="polite" aria-atomic="true">
                     <div class="metric-label">
                         <span class="label-text">DEVICE</span>
-                        <span id="device-indicator" class="label-indicator"></span>
+                        <span id="device-indicator" class="label-indicator" role="img" aria-label="Device status indicator"></span>
                     </div>
-                    <div id="device-status" class="metric-value">-</div>
-                    <div class="metric-detail" id="device-memory">0 GB VRAM</div>
+                    <div id="device-status" class="metric-value" aria-label="Computing device">-</div>
+                    <div class="metric-detail" id="device-memory" aria-label="Video memory">0 GB VRAM</div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ============================================ -->
         <!-- Controls: Neural Encoder Panel -->
+        <!-- WCAG 2.1 AA: Added form controls with proper labels and ARIA -->
         <!-- ============================================ -->
-        <div class="card encoder-panel">
-            <h2 class="card-title">
-                <span class="title-icon">🎛️</span>
+        <section class="card encoder-panel" aria-labelledby="generator-title">
+            <h2 id="generator-title" class="card-title">
+                <span class="title-icon" aria-hidden="true">🎛️</span>
                 SIGNAL GENERATOR
             </h2>
 
             <div class="encoder-controls">
                 <div class="control-section">
-                    <label class="control-label">
+                    <label for="condition-select" class="control-label">
                         <span class="label-text">CONDITION</span>
-                        <span class="label-hint">Select target pattern</span>
+                        <span class="label-hint" id="condition-hint">Select target pattern</span>
                     </label>
                     <div class="control-select-wrapper">
-                        <select id="condition-select" class="control-select">
+                        <select
+                            id="condition-select"
+                            class="control-select"
+                            aria-describedby="condition-hint condition-preview"
+                            aria-label="ECG condition selector">
                             <option value="normal">Normal Sinus Rhythm</option>
                             <option value="arrhythmia">Cardiac Arrhythmia</option>
                         </select>
-                        <div class="select-arrow">▼</div>
+                        <div class="select-arrow" aria-hidden="true">▼</div>
                     </div>
-                    <div class="control-preview">
+                    <div class="control-preview" role="status" aria-live="polite">
                         <span class="preview-label">Expected:</span>
                         <span id="condition-preview" class="preview-value">70 BPM, Low Noise</span>
                     </div>
                 </div>
 
-                <div class="control-actions">
-                    <button id="generate-btn" class="btn btn-neural">
-                        <span class="btn-icon">⚡</span>
+                <div class="control-actions" role="group" aria-label="Signal generation controls">
+                    <button
+                        id="generate-btn"
+                        class="btn btn-neural"
+                        aria-label="Generate ECG signal"
+                        type="button">
+                        <span class="btn-icon" aria-hidden="true">⚡</span>
                         <span class="btn-text">GENERATE SIGNAL</span>
                     </button>
-                    <button id="predict-btn" class="btn btn-clinical" disabled>
-                        <span class="btn-icon">🔬</span>
+                    <button
+                        id="predict-btn"
+                        class="btn btn-clinical"
+                        disabled
+                        aria-label="Run neural network inference"
+                        aria-disabled="true"
+                        type="button">
+                        <span class="btn-icon" aria-hidden="true">🔬</span>
                         <span class="btn-text">RUN INFERENCE</span>
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ============================================ -->
         <!-- ECG Visualization: Neural Signal Oscilloscope -->
@@ -194,52 +210,79 @@
 
         <!-- ============================================ -->
         <!-- Results: Clinical Analysis Dashboard -->
+        <!-- WCAG 2.1 AA: Added ARIA live regions for dynamic results -->
         <!-- ============================================ -->
-        <div class="card results-dashboard" id="results-card" style="display: none;">
+        <section
+            class="card results-dashboard"
+            id="results-card"
+            style="display: none;"
+            role="region"
+            aria-labelledby="results-title"
+            aria-live="assertive"
+            aria-atomic="false">
             <div class="results-header">
-                <h2 class="card-title">
-                    <span class="title-icon">🔬</span>
+                <h2 id="results-title" class="card-title">
+                    <span class="title-icon" aria-hidden="true">🔬</span>
                     INFERENCE RESULTS
                 </h2>
                 <div class="results-timestamp">
                     <span class="timestamp-label">COMPUTED:</span>
-                    <span id="inference-timestamp" class="timestamp-value">-</span>
+                    <span id="inference-timestamp" class="timestamp-value" aria-label="Inference timestamp">-</span>
                 </div>
             </div>
 
             <div class="results-primary">
-                <div class="classification-panel">
-                    <div class="classification-label">CLASSIFICATION</div>
-                    <div id="prediction-class" class="classification-value">-</div>
+                <div class="classification-panel" role="status" aria-live="polite" aria-atomic="true">
+                    <div class="classification-label" id="classification-label">CLASSIFICATION</div>
+                    <div
+                        id="prediction-class"
+                        class="classification-value"
+                        aria-labelledby="classification-label"
+                        aria-live="assertive">-</div>
                     <div class="classification-confidence">
                         <span class="confidence-label">CONFIDENCE:</span>
-                        <span id="prediction-confidence" class="confidence-value">-</span>
+                        <span
+                            id="prediction-confidence"
+                            class="confidence-value"
+                            aria-label="Prediction confidence">-</span>
                     </div>
                 </div>
 
-                <div class="metrics-panel">
+                <div class="metrics-panel" role="group" aria-label="Performance metrics">
                     <div class="metric-box">
-                        <div class="metric-box-label">INFERENCE TIME</div>
-                        <div id="inference-time" class="metric-box-value">-</div>
+                        <div class="metric-box-label" id="time-label">INFERENCE TIME</div>
+                        <div
+                            id="inference-time"
+                            class="metric-box-value"
+                            aria-labelledby="time-label">-</div>
                     </div>
                     <div class="metric-box">
-                        <div class="metric-box-label">SPIKES PROCESSED</div>
-                        <div id="spikes-processed" class="metric-box-value">-</div>
+                        <div class="metric-box-label" id="spikes-label">SPIKES PROCESSED</div>
+                        <div
+                            id="spikes-processed"
+                            class="metric-box-value"
+                            aria-labelledby="spikes-label">-</div>
                     </div>
                 </div>
             </div>
 
             <div class="probability-section">
                 <h3 class="section-subtitle">CLASS PROBABILITIES</h3>
-                <div class="prob-bar-group">
+                <div class="prob-bar-group" role="group" aria-label="Classification probabilities">
                     <div class="prob-bar-item">
                         <div class="prob-bar-header">
                             <span class="prob-bar-label">NORMAL</span>
                             <span id="prob-normal-text" class="prob-bar-percentage">0%</span>
                         </div>
-                        <div class="prob-bar-track">
+                        <div
+                            class="prob-bar-track"
+                            role="progressbar"
+                            aria-valuenow="0"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-label="Normal classification probability">
                             <div id="prob-normal" class="prob-bar-fill normal" style="width: 0%">
-                                <div class="prob-bar-glow"></div>
+                                <div class="prob-bar-glow" aria-hidden="true"></div>
                             </div>
                         </div>
                     </div>
@@ -249,20 +292,26 @@
                             <span class="prob-bar-label">ARRHYTHMIA</span>
                             <span id="prob-arrhythmia-text" class="prob-bar-percentage">0%</span>
                         </div>
-                        <div class="prob-bar-track">
+                        <div
+                            class="prob-bar-track"
+                            role="progressbar"
+                            aria-valuenow="0"
+                            aria-valuemin="0"
+                            aria-valuemax="100"
+                            aria-label="Arrhythmia classification probability">
                             <div id="prob-arrhythmia" class="prob-bar-fill arrhythmia" style="width: 0%">
-                                <div class="prob-bar-glow"></div>
+                                <div class="prob-bar-glow" aria-hidden="true"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="clinical-note">
-                <span class="note-icon">ℹ️</span>
+            <div class="clinical-note" role="note" aria-label="Clinical disclaimer">
+                <span class="note-icon" aria-hidden="true">ℹ️</span>
                 <span class="note-text">Results are for research purposes only. Not for clinical diagnosis.</span>
             </div>
-        </div>
+        </section>
 
         <!-- ============================================ -->
         <!-- Performance Metrics: System Performance Grid -->
