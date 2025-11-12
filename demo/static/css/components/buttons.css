@@ -79,3 +79,59 @@
 .btn:disabled::before {
   display: none;
 }
+
+/* ============================================
+   SECONDARY BUTTON (Phase 4.5 Enhancement)
+   ============================================ */
+
+/* Secondary Button Style */
+.btn-secondary {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid var(--border-moderate);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--duration-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(-100%);
+  transition: transform var(--duration-base);
+}
+
+.btn-secondary:hover::before {
+  transform: translateX(0);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--neural-cyan);
+  color: var(--neural-cyan);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: var(--border-subtle);
+  color: var(--text-tertiary);
+}

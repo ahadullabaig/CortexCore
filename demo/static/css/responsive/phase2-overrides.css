@@ -49,6 +49,15 @@
   .footer-right {
     justify-content: center;
   }
+
+  /* Phase 4.5 Enhancement Responsive Adjustments */
+  .export-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .control-slider-wrapper {
+    padding: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {

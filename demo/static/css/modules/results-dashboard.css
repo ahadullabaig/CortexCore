@@ -311,4 +311,23 @@
   color: var(--text-secondary);
 }
 
+/* ============================================
+   EXPORT SECTION (Phase 4.5 Enhancement)
+   ============================================ */
+
+/* Export Section */
+.export-section {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Note: .section-subtitle already defined above (line 211-218) */
+
+.export-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
 

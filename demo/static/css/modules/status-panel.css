@@ -112,25 +112,7 @@
   background: var(--gradient-card);
 }
 
-.card-title {
-  font-family: var(--font-primary);
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--text-accent);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.title-icon {
-  font-size: 1.2em;
-  filter: drop-shadow(var(--glow-cyan));
-}
+/* Note: .card-title and .title-icon moved to components/cards.css (shared across modules) */
 
 .status-grid-enhanced {
   display: grid;
