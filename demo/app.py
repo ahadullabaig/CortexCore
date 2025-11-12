@@ -30,7 +30,7 @@ try:
     from src.inference import load_model, predict, ensemble_predict
     from src.data import rate_encode
     from src.utils import get_device
-    from src.model import SimpleSNN, HybridSTDP_SNN
+    from src.model import SimpleSNN, HybridSTDP_SNN, DeepSNN, WiderSNN
     from src.stdp import STDPConfig
 except ImportError as e:
     print(f"⚠️  Warning: src modules not fully implemented yet: {e}")
@@ -67,30 +67,63 @@ def init_model():
 
     if Path(MODEL_PATH).exists():
         try:
-            # Load checkpoint
-            checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
+            # Load checkpoint (use weights_only=False for backward compatibility)
+            checkpoint = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
 
             # Get model config from checkpoint
             config = checkpoint.get('config', {})
             input_size = config.get('input_size', 2500)
-            hidden_size = config.get('hidden_size', 128)
+            output_size = config.get('output_size', 2)
 
-            # Detect model type (STDP or SimpleSNN)
-            # STDP models have 'stdp_statistics' or 'stdp' in path
-            has_stdp_stats = 'stdp_statistics' in checkpoint
-            has_stdp_path = 'stdp' in MODEL_PATH.lower()
-            is_stdp_model = has_stdp_stats or has_stdp_path
-            model_type = 'HybridSTDP_SNN' if is_stdp_model else 'SimpleSNN'
+            # Detect architecture type from config
+            architecture = config.get('architecture', None)
 
+            # If no architecture specified, try to detect from other indicators
+            if architecture is None:
+                has_stdp_stats = 'stdp_statistics' in checkpoint
+                has_stdp_path = 'stdp' in MODEL_PATH.lower()
+                is_stdp_model = has_stdp_stats or has_stdp_path
+
+                if is_stdp_model:
+                    architecture = 'HybridSTDP_SNN'
+                else:
+                    architecture = 'SimpleSNN'
+
+            model_type = architecture
             print(f"🔍 Model Detection:")
-            print(f"   Has stdp_statistics: {has_stdp_stats}")
-            print(f"   Has 'stdp' in path: {has_stdp_path}")
-            print(f"   Is STDP model: {is_stdp_model}")
-            print(f"   Model type: {model_type}")
+            print(f"   Architecture: {architecture}")
+            print(f"   Config: {config}")
 
-            # Create model instance
-            if is_stdp_model:
+            # Create model instance based on architecture
+            if architecture == 'DeepSNN':
+                print(f"🧠 Loading DeepSNN model...")
+                hidden_sizes = config.get('hidden_sizes', [256, 128])
+                dropout = config.get('dropout', 0.3)
+                beta = config.get('beta', 0.9)
+
+                model = DeepSNN(
+                    input_size=input_size,
+                    hidden_sizes=hidden_sizes,
+                    output_size=output_size,
+                    beta=beta,
+                    dropout=dropout
+                )
+            elif architecture == 'WiderSNN':
+                print(f"🧠 Loading WiderSNN model...")
+                hidden_size = config.get('hidden_size', 256)
+                dropout = config.get('dropout', 0.2)
+                beta = config.get('beta', 0.9)
+
+                model = WiderSNN(
+                    input_size=input_size,
+                    hidden_size=hidden_size,
+                    output_size=output_size,
+                    beta=beta,
+                    dropout=dropout
+                )
+            elif architecture == 'HybridSTDP_SNN':
                 print(f"🧠 Loading STDP model...")
+                hidden_size = config.get('hidden_size', 128)
                 # Create STDP config
                 stdp_config = STDPConfig(
                     use_homeostasis=True,
@@ -104,15 +137,16 @@ def init_model():
                 model = HybridSTDP_SNN(
                     input_size=input_size,
                     hidden_size=hidden_size,
-                    output_size=2,
+                    output_size=output_size,
                     config=stdp_config
                 )
-            else:
+            else:  # Default to SimpleSNN
                 print(f"🧠 Loading SimpleSNN model...")
+                hidden_size = config.get('hidden_size', 128)
                 model = SimpleSNN(
                     input_size=input_size,
                     hidden_size=hidden_size,
-                    output_size=2
+                    output_size=output_size
                 )
 
             # Load weights
@@ -126,23 +160,32 @@ def init_model():
             else:
                 val_acc = checkpoint.get('val_acc', checkpoint.get('val_accuracy', 'N/A'))
 
+            # Get additional info for model_info
+            if architecture == 'DeepSNN':
+                architecture_info = f"DeepSNN ({config.get('hidden_sizes', [256, 128])})"
+            elif architecture == 'WiderSNN':
+                architecture_info = f"WiderSNN ({config.get('hidden_size', 256)})"
+            else:
+                architecture_info = f"{architecture} ({config.get('hidden_size', 128)})"
+
             model_info = {
                 'loaded': True,
                 'model_type': model_type,
+                'architecture': architecture,
+                'architecture_info': architecture_info,
                 'path': MODEL_PATH,
                 'device': DEVICE,
                 'val_acc': val_acc,
                 'epoch': checkpoint.get('epoch', 'N/A'),
-                'input_size': input_size,
-                'hidden_size': hidden_size,
+                'config': config,
                 'parameters': sum(p.numel() for p in model.parameters()),
-                'stdp_enabled': is_stdp_model
+                'stdp_enabled': architecture == 'HybridSTDP_SNN'
             }
             print(f"✅ Model loaded from {MODEL_PATH}")
             print(f"   Type: {model_type}")
             print(f"   Validation accuracy: {model_info['val_acc']}")
             print(f"   Parameters: {model_info['parameters']:,}")
-            print(f"   STDP features: {is_stdp_model}")
+            print(f"   STDP features: {model_info['stdp_enabled']}")
         except Exception as e:
             print(f"⚠️  Error loading model: {e}")
             import traceback
@@ -165,10 +208,16 @@ def index():
 @app.route('/health')
 def health():
     """Health check endpoint"""
+    # Calculate device memory if CUDA available
+    device_memory = 0
+    if torch.cuda.is_available():
+        device_memory = torch.cuda.get_device_properties(DEVICE).total_memory / 1e9  # Convert to GB
+
     return jsonify({
         'status': 'healthy',
         'model': model_info,
         'device': DEVICE,
+        'device_memory': device_memory,
         'timestamp': time.time()
     })
 
