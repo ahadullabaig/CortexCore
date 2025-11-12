@@ -114,6 +114,34 @@
                     </div>
                 </div>
 
+                <!-- Gain Slider Control -->
+                <div class="control-section">
+                    <label for="gain-slider" class="control-label">
+                        <span class="label-text">SPIKE ENCODING GAIN</span>
+                        <span class="label-hint" id="gain-hint">Controls spike density (Range: 1.0 - 20.0)</span>
+                    </label>
+                    <div class="control-slider-wrapper">
+                        <input
+                            type="range"
+                            id="gain-slider"
+                            class="control-slider"
+                            min="1"
+                            max="20"
+                            step="0.5"
+                            value="10"
+                            aria-describedby="gain-hint"
+                            aria-label="Spike encoding gain slider">
+                        <div class="slider-value-display">
+                            <span class="slider-value-text">GAIN:</span>
+                            <span id="gain-value" class="slider-value-number">10.0</span>
+                        </div>
+                    </div>
+                    <div class="control-preview" role="status" aria-live="polite">
+                        <span class="preview-label">Effect:</span>
+                        <span id="gain-preview" class="preview-value">Normal spike rate</span>
+                    </div>
+                </div>
+
                 <div class="control-actions" role="group" aria-label="Signal generation controls">
                     <button
                         id="generate-btn"
@@ -318,6 +346,25 @@
             <div class="clinical-note" role="note" aria-label="Clinical disclaimer">
                 <span class="note-icon" aria-hidden="true">ℹ️</span>
                 <span class="note-text">Results are for research purposes only. Not for clinical diagnosis.</span>
+            </div>
+
+            <!-- Export Section -->
+            <div class="export-section">
+                <h3 class="section-subtitle">EXPORT RESULTS</h3>
+                <div class="export-buttons">
+                    <button id="export-ecg-btn" class="btn btn-secondary" aria-label="Download ECG plot as PNG">
+                        <span class="btn-icon" aria-hidden="true">💾</span>
+                        <span class="btn-text">ECG PLOT</span>
+                    </button>
+                    <button id="export-spikes-btn" class="btn btn-secondary" aria-label="Download spike raster as PNG">
+                        <span class="btn-icon" aria-hidden="true">💾</span>
+                        <span class="btn-text">SPIKE RASTER</span>
+                    </button>
+                    <button id="export-csv-btn" class="btn btn-secondary" aria-label="Download results as CSV">
+                        <span class="btn-icon" aria-hidden="true">📊</span>
+                        <span class="btn-text">RESULTS CSV</span>
+                    </button>
+                </div>
             </div>
         </section>
 

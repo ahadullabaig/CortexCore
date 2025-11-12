@@ -592,6 +592,67 @@ function setupEventListeners() {
         };
         document.getElementById('condition-preview').textContent = previews[e.target.value];
     });
+
+    // Gain slider event listener
+    const gainSlider = document.getElementById('gain-slider');
+    const gainValue = document.getElementById('gain-value');
+    const gainPreview = document.getElementById('gain-preview');
+
+    if (gainSlider) {
+        gainSlider.addEventListener('input', function(e) {
+            const gain = parseFloat(e.target.value);
+            gainValue.textContent = gain.toFixed(1);
+
+            // Update preview text based on gain value
+            if (gain < 5) {
+                gainPreview.textContent = 'Low spike rate (sparse)';
+            } else if (gain < 10) {
+                gainPreview.textContent = 'Below-normal spike rate';
+            } else if (gain === 10) {
+                gainPreview.textContent = 'Normal spike rate';
+            } else if (gain < 15) {
+                gainPreview.textContent = 'Above-normal spike rate';
+            } else {
+                gainPreview.textContent = 'High spike rate (dense)';
+            }
+
+            // Store in AppState for later use
+            AppState.setState('ui.gainValue', gain);
+        });
+    }
+
+    // Export button event listeners
+    const exportEcgBtn = document.getElementById('export-ecg-btn');
+    const exportSpikesBtn = document.getElementById('export-spikes-btn');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+
+    if (exportEcgBtn) {
+        exportEcgBtn.addEventListener('click', () => {
+            Plotly.downloadImage('ecg-plot', {
+                format: 'png',
+                width: 1200,
+                height: 600,
+                filename: 'cortexcore_ecg.png'
+            });
+            ErrorHandler.showToast('ECG plot downloaded', 'success');
+        });
+    }
+
+    if (exportSpikesBtn) {
+        exportSpikesBtn.addEventListener('click', () => {
+            Plotly.downloadImage('spike-plot', {
+                format: 'png',
+                width: 1200,
+                height: 600,
+                filename: 'cortexcore_spikes.png'
+            });
+            ErrorHandler.showToast('Spike raster downloaded', 'success');
+        });
+    }
+
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportResultsAsCSV);
+    }
 }
 
 // ============================================
@@ -635,6 +696,14 @@ async function checkHealth() {
 
         deviceStatus.textContent = data.device.toUpperCase();
         deviceStatus.className = data.device === 'cuda' ? 'status-badge success' : 'status-badge info';
+
+        // Update device memory (VRAM)
+        const deviceMemory = document.getElementById('device-memory');
+        if (data.device_memory && data.device_memory > 0) {
+            deviceMemory.textContent = `${data.device_memory.toFixed(1)} GB VRAM`;
+        } else {
+            deviceMemory.textContent = 'N/A';
+        }
 
         console.log('✅ Health check complete:', data);
     } catch (error) {
@@ -712,6 +781,9 @@ async function generateSample() {
 
 async function generateSpikes(signal) {
     try {
+        // Get gain value from AppState or use default
+        const gainValue = AppState.getState('ui.gainValue') || 10.0;
+
         // Measure spike encoding time
         const data = await measureVisualizationTime('spike-encoding', async () => {
             // Use ErrorHandler for resilient fetching with retry logic
@@ -721,7 +793,8 @@ async function generateSpikes(signal) {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    signal: signal
+                    signal: signal,
+                    gain: gainValue  // Include custom gain value
                 }),
                 timeout: 10000 // 10 second timeout for spike encoding
             });
@@ -1293,6 +1366,25 @@ function displayResults(results) {
     const inferenceTime = document.getElementById('inference-time');
     inferenceTime.textContent = `${results.inference_time_ms.toFixed(2)} ms`;
 
+    // Update inference timestamp
+    const inferenceTimestamp = document.getElementById('inference-timestamp');
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+    });
+    inferenceTimestamp.textContent = timeStr;
+
+    // Update spikes processed
+    const spikesProcessed = document.getElementById('spikes-processed');
+    if (results.spike_count !== undefined) {
+        spikesProcessed.textContent = `${results.spike_count.toLocaleString()} spikes`;
+    } else {
+        spikesProcessed.textContent = '-';
+    }
+
     // Update probability bars WITH ARIA ATTRIBUTES (accessibility)
     if (results.probabilities && results.probabilities.length >= 2) {
         const probNormal = results.probabilities[0] * 100;
@@ -1325,6 +1417,69 @@ function displayResults(results) {
     announceToScreenReader(
         `Classification complete: ${results.class_name} with ${(results.confidence * 100).toFixed(1)}% confidence`
     );
+}
+
+/**
+ * Export results as CSV file
+ */
+function exportResultsAsCSV() {
+    // Get current state
+    const signal = currentSignal;
+    const spikes = currentSpikes;
+
+    if (!signal) {
+        ErrorHandler.showToast('No signal data to export. Generate a signal first.', 'warning');
+        return;
+    }
+
+    // Get results data from the DOM
+    const classificationText = document.getElementById('prediction-class').textContent;
+    const confidenceText = document.getElementById('prediction-confidence').textContent;
+    const inferenceTimeText = document.getElementById('inference-time').textContent;
+    const conditionSelect = document.getElementById('condition-select');
+    const condition = conditionSelect ? conditionSelect.value : 'Unknown';
+
+    // Get spike stats if available
+    const totalSpikesText = document.getElementById('total-spikes').textContent || '0';
+    const firingRateText = document.getElementById('firing-rate').textContent || '0 Hz';
+    const sparsityText = document.getElementById('sparsity').textContent || '0%';
+
+    // Prepare CSV content
+    const lines = [
+        ['Metric', 'Value'],
+        ['Condition', condition.charAt(0).toUpperCase() + condition.slice(1)],
+        ['Classification', classificationText || 'N/A'],
+        ['Confidence', confidenceText || 'N/A'],
+        ['Inference Time', inferenceTimeText || 'N/A'],
+        ['Timestamp', new Date().toLocaleString()],
+        [],
+        ['Signal Statistics'],
+        ['Duration', '10 seconds'],
+        ['Sampling Rate', '250 Hz'],
+        ['Samples', signal.length],
+        [],
+        ['Spike Statistics'],
+        ['Total Spikes', totalSpikesText],
+        ['Firing Rate', firingRateText],
+        ['Sparsity', sparsityText],
+    ];
+
+    const csvContent = lines
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `cortexcore_results_${new Date().getTime()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    ErrorHandler.showToast('Results exported as CSV', 'success');
 }
 
 /**

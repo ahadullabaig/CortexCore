@@ -208,10 +208,16 @@ def index():
 @app.route('/health')
 def health():
     """Health check endpoint"""
+    # Calculate device memory if CUDA available
+    device_memory = 0
+    if torch.cuda.is_available():
+        device_memory = torch.cuda.get_device_properties(DEVICE).total_memory / 1e9  # Convert to GB
+
     return jsonify({
         'status': 'healthy',
         'model': model_info,
         'device': DEVICE,
+        'device_memory': device_memory,
         'timestamp': time.time()
     })
 
