@@ -167,11 +167,12 @@
 }
 
 .metric-value {
-  font-family: var(--font-primary);
-  font-size: var(--text-xl);
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  color: var(--neural-cyan);
+  text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+  margin-bottom: 0.5rem;
 }
 
 .metric-detail {

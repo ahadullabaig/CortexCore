@@ -99,7 +99,7 @@
 
 .performance-badge {
   font-family: var(--font-primary);
-  font-size: 0.65rem;
+  font-size: var(--text-xs);
   color: var(--neural-purple);
   background: rgba(168, 85, 247, 0.1);
   border: 1px solid rgba(168, 85, 247, 0.3);
