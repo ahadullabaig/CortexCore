@@ -1,0 +1,26 @@
+/* ============================================
+   NUMBER COUNTER ANIMATIONS
+   ============================================ */
+
+/* ============================================
+   36. NUMBER COUNTER ANIMATIONS
+   ============================================ */
+
+/* Counter digit animation helper */
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated counter class */
+.counter-animated {
+  animation: countUp var(--duration-base) var(--ease-spring);
+}
+
+

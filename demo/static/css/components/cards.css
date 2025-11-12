@@ -1,0 +1,104 @@
+/* ============================================
+   CARDS - BASE COMPONENT
+   ============================================ */
+
+
+/* ============================================
+   7. CARDS - BASE COMPONENT
+   ============================================ */
+
+.card {
+  background: var(--gradient-card);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-moderate);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  position: relative;
+  transition: all var(--duration-base) var(--ease-in-out);
+
+  /* PERFORMANCE OPTIMIZATIONS (Phase 4) */
+  /* Content visibility: Skip rendering work for off-screen cards */
+  content-visibility: auto;
+  /* Contain: Isolate card rendering from rest of page */
+  contain: layout style paint;
+  /* Contain intrinsic size: Prevent layout shifts when card becomes visible */
+  contain-intrinsic-size: auto 500px; /* Estimated card height */
+}
+
+/* Subtle gradient border effect */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 217, 255, 0.2),
+    transparent 50%,
+    rgba(168, 85, 247, 0.1)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: var(--border-glow);
+  box-shadow:
+    0 8px 16px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(0, 217, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.card h2 {
+  font-family: var(--font-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.card h2 .title-icon {
+  font-size: 1.2em;
+  filter: drop-shadow(var(--glow-cyan));
+}
+
+/* Shared Card Title Classes (used across all modules) */
+.card-title {
+  font-family: var(--font-primary);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.title-icon {
+  font-size: 1.2em;
+  filter: drop-shadow(var(--glow-cyan));
+}

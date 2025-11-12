@@ -1,0 +1,199 @@
+/* ============================================
+   STATUS PANEL - MISSION CONTROL (Base + Enhanced)
+   ============================================ */
+
+/* ============================================
+   8. STATUS PANEL - MISSION CONTROL
+   ============================================ */
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.status-item {
+  background: rgba(26, 31, 46, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all var(--duration-base);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-item:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.1);
+}
+
+.status-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.status-badge {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--duration-base);
+}
+
+.status-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-badge.success {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: var(--clinical-normal);
+}
+
+.status-badge.success::before {
+  background: var(--clinical-normal);
+  box-shadow: var(--glow-green);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-badge.warning {
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: var(--clinical-warning);
+}
+
+.status-badge.warning::before {
+  background: var(--clinical-warning);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+
+.status-badge.info {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  color: var(--clinical-info);
+}
+
+.status-badge.info::before {
+  background: var(--clinical-info);
+}
+
+/* Status pulse animation */
+@keyframes statusPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 10px 5px currentColor;
+    opacity: 0.8;
+  }
+}
+
+
+
+/* ============================================
+   22. STATUS PANEL (Enhanced - Mission Control)
+   ============================================ */
+
+.status-panel {
+  background: var(--gradient-card);
+}
+
+/* Note: .card-title and .title-icon moved to components/cards.css (shared across modules) */
+
+.status-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.status-metric {
+  background: rgba(26, 31, 46, 0.5);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all var(--duration-base);
+}
+
+.status-metric:hover {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 10px rgba(0, 217, 255, 0.1);
+}
+
+.metric-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.label-text {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.label-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.label-indicator.online {
+  background: var(--clinical-normal);
+  box-shadow: var(--glow-green);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.label-indicator.loading {
+  background: var(--clinical-warning);
+  animation: statusPulse 1s ease-in-out infinite;
+}
+
+.metric-value {
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  color: var(--neural-cyan);
+  text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
+  margin-bottom: 0.5rem;
+}
+
+.metric-detail {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.metric-graph {
+  height: 4px;
+  background: var(--border-moderate);
+  border-radius: 2px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.graph-bar {
+  height: 100%;
+  background: var(--gradient-accent);
+  border-radius: 2px;
+  transition: width var(--duration-slow);
+}
+
+

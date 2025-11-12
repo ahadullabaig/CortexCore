@@ -1,0 +1,61 @@
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+
+/* ============================================
+   16. LOADING STATES
+   ============================================ */
+
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Neural activity loader */
+.loading-neurons {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.loading-neuron {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--neural-cyan);
+  animation: neuronFire 1.4s ease-in-out infinite;
+}
+
+.loading-neuron:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-neuron:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-neuron:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes neuronFire {
+  0%, 100% {
+    background: var(--neural-cyan);
+    transform: scale(1);
+  }
+  50% {
+    background: var(--neural-purple);
+    transform: scale(1.5);
+    box-shadow: var(--glow-cyan);
+  }
+}

@@ -1,0 +1,36 @@
+/* ============================================
+   DATA VISUALIZATION ANIMATIONS
+   ============================================ */
+
+/* ============================================
+   37. DATA VISUALIZATION ANIMATIONS
+   ============================================ */
+
+/* Staggered data point reveal */
+@keyframes dataReveal {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* SVG path drawing animation */
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Enhanced probability bar entrance */
+.prob-bar-fill {
+  animation: slideUp var(--duration-slow) var(--ease-spring);
+}
+
+

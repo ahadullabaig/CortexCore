@@ -1,0 +1,39 @@
+/* ============================================
+   PLOT CONTAINERS - OSCILLOSCOPE DISPLAY
+   ============================================ */
+
+/* ============================================
+   11. PLOT CONTAINERS - OSCILLOSCOPE DISPLAY
+   ============================================ */
+
+.plot-container {
+  position: relative;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--border-moderate);
+  border-radius: 8px;
+  padding: 0.5rem;
+  overflow: hidden;
+  min-height: 400px;
+}
+
+/* Grid overlay effect */
+.plot-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 20px,
+    rgba(0, 217, 255, 0.03) 20px,
+    rgba(0, 217, 255, 0.03) 21px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.plot-container > div {
+  position: relative;
+  z-index: 2;
+}
+

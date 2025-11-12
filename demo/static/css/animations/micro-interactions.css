@@ -1,0 +1,60 @@
+/* ============================================
+   BUTTON RIPPLE EFFECT & MICRO-INTERACTIONS
+   ============================================ */
+
+/* ============================================
+   31. BUTTON RIPPLE EFFECT & MICRO-INTERACTIONS
+   ============================================ */
+
+/* Ripple effect keyframe */
+@keyframes ripple {
+  from {
+    width: 0;
+    height: 0;
+    opacity: 0.5;
+  }
+  to {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+  }
+}
+
+/* Enhanced button with ripple container */
+/* PERFORMANCE FIX: Apply will-change only on hover, not permanently */
+.btn:hover:not(:disabled),
+.btn:focus:not(:disabled) {
+  will-change: transform;
+}
+
+.btn:not(:hover):not(:focus) {
+  will-change: auto;
+}
+
+/* Ripple overlay (created dynamically by JavaScript) */
+.btn .ripple-effect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: ripple 600ms ease-out;
+}
+
+/* Enhanced hover state with scale */
+.btn:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Active state with slight scale down */
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+  transition-duration: var(--duration-instant);
+}
+
+/* Card hover enhancement with lift and scale */
+.card:hover {
+  transform: translateY(-4px) scale(1.01);
+}
+
+

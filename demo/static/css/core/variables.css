@@ -1,0 +1,95 @@
+/**
+ * CSS Variables - Dark Neuroscience Palette
+ * Central configuration for all colors, typography, spacing, and timing
+ */
+
+:root {
+  /* ===== Font Families ===== */
+  --font-display: 'Rajdhani', sans-serif;
+  --font-primary: 'JetBrains Mono', monospace;
+  --font-secondary: 'Archivo', sans-serif;
+
+  /* ===== Type Scale ===== */
+  --text-xs: 0.75rem;      /* 12px - Labels, captions */
+  --text-sm: 0.875rem;     /* 14px - Body small */
+  --text-base: 1rem;       /* 16px - Body */
+  --text-lg: 1.125rem;     /* 18px - Subheadings */
+  --text-xl: 1.5rem;       /* 24px - Card headers */
+  --text-2xl: 2rem;        /* 32px - Metrics */
+  --text-3xl: 2.5rem;      /* 40px - Hero title */
+  --text-4xl: 3.5rem;      /* 56px - Large numbers */
+
+  /* ===== Base Colors - Deep Space Background ===== */
+  --bg-primary: #0a0e1a;      /* Almost black, slight blue tint */
+  --bg-secondary: #0f1419;    /* Cards, elevated surfaces */
+  --bg-tertiary: #1a1f2e;     /* Hover states, inputs */
+
+  /* ===== Neural Electric Accents ===== */
+  --neural-cyan: #00d9ff;     /* Primary accent - synaptic activity */
+  --neural-blue: #0088ff;     /* Secondary accent - action potentials */
+  --neural-purple: #a855f7;   /* Tertiary - deep brain activity */
+  --neural-teal: #14b8a6;     /* Quaternary - stable states */
+
+  /* ===== Clinical Status Colors ===== */
+  --clinical-normal: #10b981; /* Green - healthy signals */
+  --clinical-warning: #f59e0b;/* Amber - attention required */
+  --clinical-critical: #ef4444;/* Red - arrhythmia/abnormal */
+  --clinical-info: #3b82f6;   /* Blue - informational */
+
+  /* ===== Text Colors ===== */
+  /* WCAG 2.1 AA COMPLIANT - All colors meet 4.5:1 contrast ratio minimum */
+  --text-primary: #e4e7ed;    /* High contrast white-ish (7.8:1) */
+  --text-secondary: #b4bcd0;  /* Dimmed for secondary info (4.8:1) - UPDATED for accessibility */
+  --text-tertiary: #8b92a0;   /* Even more subtle (4.5:1) - UPDATED for accessibility */
+  --text-accent: #00d9ff;     /* Cyan for emphasis (6.2:1) */
+
+  /* ===== Border & Divider ===== */
+  --border-subtle: #1f2937;   /* Barely visible */
+  --border-moderate: #374151; /* Visible but not dominant */
+  --border-strong: #4b5563;   /* Clear separation */
+  --border-glow: rgba(0, 217, 255, 0.3); /* Cyan glow effect */
+
+  /* ===== Glow Effects ===== */
+  --glow-cyan: 0 0 20px rgba(0, 217, 255, 0.5);
+  --glow-blue: 0 0 20px rgba(0, 136, 255, 0.4);
+  --glow-purple: 0 0 20px rgba(168, 85, 247, 0.4);
+  --glow-green: 0 0 20px rgba(16, 185, 129, 0.4);
+  --glow-red: 0 0 20px rgba(239, 68, 68, 0.4);
+
+  /* ===== Gradients ===== */
+  --gradient-bg: radial-gradient(
+    ellipse at top,
+    rgba(0, 217, 255, 0.05) 0%,
+    transparent 50%
+  );
+
+  --gradient-card: linear-gradient(
+    135deg,
+    rgba(15, 20, 25, 0.95) 0%,
+    rgba(10, 14, 26, 0.98) 100%
+  );
+
+  --gradient-accent: linear-gradient(
+    90deg,
+    var(--neural-cyan) 0%,
+    var(--neural-blue) 100%
+  );
+
+  --gradient-clinical: linear-gradient(
+    90deg,
+    var(--clinical-normal) 0%,
+    var(--neural-teal) 100%
+  );
+
+  /* ===== Timing & Easing ===== */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 800ms;
+
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}

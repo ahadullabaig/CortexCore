@@ -1,0 +1,126 @@
+/* ============================================
+   AMBIENT BACKGROUND EFFECTS
+   ============================================ */
+
+/* ============================================
+   35. AMBIENT BACKGROUND EFFECTS
+   ============================================ */
+
+/* Floating particles container */
+.neural-particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* Float animation for particles */
+@keyframes float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(10px, -25px) scale(1.1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-5px, -50px) scale(0.9);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(-15px, -75px) scale(1.05);
+    opacity: 0.4;
+  }
+}
+
+/* Individual particle styling */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--neural-cyan);
+  border-radius: 50%;
+  opacity: 0.3;
+  animation: float linear infinite;
+  box-shadow: 0 0 10px var(--neural-cyan);
+}
+
+/* Varied particle sizes */
+.particle.small {
+  width: 2px;
+  height: 2px;
+}
+
+.particle.large {
+  width: 6px;
+  height: 6px;
+}
+
+/* Grid scan effect */
+@keyframes gridScan {
+  from {
+    transform: translateY(-100vh);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Grid scanner line */
+.grid-scanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--neural-cyan) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.5;
+  animation: gridScan 15s linear infinite;
+  box-shadow: 0 0 20px var(--neural-cyan);
+}
+
+/* Gradient shift for backgrounds */
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Pulsing glow on accent borders */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--neural-cyan);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--neural-cyan), 0 0 40px rgba(0, 217, 255, 0.3);
+  }
+}
+
+/* Glow accent class */
+.glow-accent {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+/* Apply glow to spike monitor */
+.spike-monitor-wrapper {
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+

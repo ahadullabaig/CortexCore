@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phase 1 Module Test</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0e1a;
+            color: #e4e7ed;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00d9ff;
+            border-bottom: 2px solid #00d9ff;
+            padding-bottom: 0.5rem;
+        }
+        #results {
+            background: #0f1419;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        p {
+            margin: 0.5rem 0;
+            padding: 0.25rem;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>Phase 1 Utilities Test</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        import { detectDeviceCapabilities } from './utils/device.js';
+        import { performanceMetrics, measureVisualizationTime } from './utils/performance.js';
+        import { formatTime } from './utils/timing.js';
+        import { setButtonState, announceToScreenReader } from './utils/accessibility.js';
+        import { SPIKE_BUFFER_CONFIG, animationState } from './core/config.js';
+
+        const results = document.getElementById('results');
+
+        try {
+            // Test 1: Device detection
+            detectDeviceCapabilities();
+            results.innerHTML += '<p class="success">✓ Device detection loaded and executed</p>';
+
+            // Test 2: Performance metrics
+            const testTime = measureVisualizationTime('test', () => {
+                let sum = 0;
+                for (let i = 0; i < 1000000; i++) sum += i;
+                return sum;
+            });
+            results.innerHTML += `<p class="success">✓ Performance test completed: ${performanceMetrics.lastUpdate}</p>`;
+
+            // Test 3: Time formatting
+            results.innerHTML += `<p class="success">✓ Format time: ${formatTime(1234.56)}</p>`;
+
+            // Test 4: Accessibility
+            const btn = document.createElement('button');
+            btn.id = 'test-btn';
+            setButtonState(btn, true);
+            results.innerHTML += `<p class="success">✓ Button disabled: ${btn.disabled}</p>`;
+
+            announceToScreenReader('Test message');
+            results.innerHTML += '<p class="success">✓ Screen reader announcement sent</p>';
+
+            // Test 5: Config
+            results.innerHTML += `<p class="success">✓ Config loaded: MAX_POINTS=${SPIKE_BUFFER_CONFIG.MAX_POINTS}</p>`;
+            results.innerHTML += `<p class="success">✓ Animation state: isInitialized=${animationState.isInitialized}</p>`;
+
+            console.log('✅ Phase 1 modules loaded successfully');
+            results.innerHTML += '<p class="success"><strong>✅ All Phase 1 modules loaded successfully!</strong></p>';
+
+        } catch (error) {
+            console.error('❌ Phase 1 test failed:', error);
+            results.innerHTML += `<p class="error">❌ Test failed: ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>

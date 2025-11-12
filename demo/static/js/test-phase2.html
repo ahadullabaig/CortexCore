@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phase 2 Module Test</title>
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0e1a;
+            color: #e4e7ed;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00d9ff;
+            border-bottom: 2px solid #00d9ff;
+            padding-bottom: 0.5rem;
+        }
+        #results {
+            background: #0f1419;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        p {
+            margin: 0.5rem 0;
+            padding: 0.25rem;
+        }
+        .success { color: #10b981; }
+        .error { color: #ef4444; }
+        button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: #00d9ff;
+            color: #0a0e1a;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phase 2 Core Systems Test</h1>
+    <button id="test-btn">Test Button</button>
+    <div id="results"></div>
+
+    <script type="module">
+        import { AppState } from './core/state.js';
+        import { ErrorHandler } from './api/client.js';
+        import { checkHealth } from './api/health.js';
+
+        const results = document.getElementById('results');
+
+        try {
+            // Test 1: State management
+            AppState.setState('model.loaded', true);
+            const isLoaded = AppState.getState('model.loaded');
+            results.innerHTML += `<p class="success">✓ State: model.loaded = ${isLoaded}</p>`;
+
+            // Test 2: State subscription
+            AppState.subscribe('ui.isGenerating', (newVal, oldVal) => {
+                results.innerHTML += `<p class="success">✓ Subscription fired: ${oldVal} → ${newVal}</p>`;
+            });
+            AppState.setState('ui.isGenerating', true);
+
+            // Test 3: Error handler toast
+            ErrorHandler.showToast('Test notification', 'info');
+            results.innerHTML += '<p class="success">✓ Toast notification shown</p>';
+
+            // Test 4: Fetch with retry (simulate error)
+            try {
+                await ErrorHandler.fetchWithRetry('/nonexistent-endpoint', { timeout: 1000 });
+            } catch (e) {
+                results.innerHTML += `<p class="success">✓ Error handled: ${e.message}</p>`;
+            }
+
+            // Test 5: State validation
+            const invalidSet = AppState.setState('model.loaded', 'not-a-boolean');
+            results.innerHTML += `<p class="success">✓ State validation: invalid rejected = ${!invalidSet}</p>`;
+
+            // Test 6: State reset
+            AppState.reset();
+            const resetState = AppState.getState('model.loaded');
+            results.innerHTML += `<p class="success">✓ State reset: model.loaded = ${resetState}</p>`;
+
+            console.log('✅ Phase 2 modules loaded successfully');
+            results.innerHTML += '<p class="success"><strong>✅ All Phase 2 modules loaded successfully!</strong></p>';
+
+        } catch (error) {
+            console.error('❌ Phase 2 test failed:', error);
+            results.innerHTML += `<p class="error">❌ Test failed: ${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>

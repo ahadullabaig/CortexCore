@@ -1,0 +1,49 @@
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+/* ============================================
+   43. PRINT STYLES (BONUS)
+   Phase 4: Accessible Printing
+   ============================================ */
+
+@media print {
+  /* Hide non-essential elements for printing */
+  .neural-particles,
+  .grid-scanner,
+  .floating-particles,
+  button,
+  .btn {
+    display: none !important;
+  }
+
+  /* Optimize colors for black & white printing */
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .card {
+    background: white !important;
+    border: 2px solid black !important;
+    page-break-inside: avoid;
+    margin: 1rem 0;
+  }
+
+  /* Ensure charts are visible when printed */
+  #ecg-plot,
+  #spike-plot {
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+
+  /* High contrast text for printing */
+  .card-title,
+  .metric-value,
+  .classification-value {
+    color: black !important;
+    text-shadow: none !important;
+  }
+}
+
+

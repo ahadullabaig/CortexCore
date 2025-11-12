@@ -1,0 +1,50 @@
+/* ============================================
+   MOBILE ANIMATION OPTIMIZATIONS
+   ============================================ */
+
+/* ============================================
+   39. MOBILE ANIMATION OPTIMIZATIONS
+   ============================================ */
+
+/* Disable heavy animations on mobile for performance */
+@media (max-width: 768px) {
+  /* Disable floating particles on mobile */
+  .neural-particles {
+    display: none;
+  }
+
+  /* Disable grid scanner on mobile */
+  .grid-scanner {
+    display: none;
+  }
+
+  /* Simplify hover effects on touch devices */
+  @media (hover: none) {
+    .btn:hover:not(:disabled) {
+      transform: translateY(0) scale(1);
+    }
+
+    .card:hover {
+      transform: translateY(0) scale(1);
+    }
+
+    .status-metric:hover,
+    .result-item:hover,
+    .metric-item:hover,
+    .performance-item:hover {
+      transform: translateY(0);
+    }
+  }
+
+  /* Reduce animation complexity */
+  .particle {
+    animation-duration: 8s;
+  }
+
+  /* Faster transitions on mobile */
+  * {
+    transition-duration: calc(var(--duration-base) * 0.7) !important;
+  }
+}
+
+

@@ -1,0 +1,60 @@
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* ============================================
+   18. ACCESSIBILITY
+   ============================================ */
+
+/* Screen reader only content (visually hidden but accessible) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus states for keyboard navigation (WCAG 2.1 AA Enhanced) */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--neural-cyan); /* Increased from 2px for better visibility */
+  outline-offset: 3px; /* Increased offset for better separation */
+  border-radius: 4px; /* Smooth corners */
+  transition: outline var(--duration-fast) var(--ease-out);
+}
+
+/* Additional focus indicator for Plotly chart containers (accessibility fix) */
+#ecg-plot:focus-visible,
+#spike-plot:focus-visible {
+  outline: 3px solid var(--neural-cyan);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+/* Focus indicator for cards (keyboard navigation support) */
+.card:focus-within {
+  border-color: var(--neural-cyan);
+  box-shadow:
+    0 0 0 3px rgba(0, 217, 255, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
