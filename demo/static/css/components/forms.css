@@ -1,0 +1,54 @@
+/* ============================================
+   CONTROLS - NEURAL ENCODER PANEL
+   ============================================ */
+
+
+/* ============================================
+   9. CONTROLS - NEURAL ENCODER PANEL
+   ============================================ */
+
+.controls-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.control-group label {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.form-control {
+  font-family: var(--font-secondary);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-moderate);
+  border-radius: 6px;
+  padding: 0.75rem;
+  transition: all var(--duration-base);
+}
+
+.form-control:hover {
+  border-color: var(--border-strong);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--neural-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.form-control option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}

@@ -1,0 +1,60 @@
+/**
+ * Reset & Base Styles
+ * Box model reset and layered background system
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-secondary);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  position: relative;
+  min-height: 100vh;
+}
+
+/* ===== Layered Background System ===== */
+
+/* Layer 1: Base color (already set above) */
+
+/* Layer 2: Subtle gradient overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at top right,
+    rgba(0, 217, 255, 0.05) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Layer 3: Neural network pattern (SVG inline for simplicity) */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' opacity='0.03'%3E%3Cdefs%3E%3Cpattern id='neuralNet' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Ccircle cx='10' cy='10' r='2' fill='%2300d9ff' /%3E%3Ccircle cx='90' cy='30' r='2' fill='%2300d9ff' /%3E%3Ccircle cx='50' cy='70' r='2' fill='%2300d9ff' /%3E%3Ccircle cx='30' cy='90' r='2' fill='%2300d9ff' /%3E%3Cline x1='10' y1='10' x2='90' y2='30' stroke='%2300d9ff' stroke-width='0.5' opacity='0.3' /%3E%3Cline x1='90' y1='30' x2='50' y2='70' stroke='%2300d9ff' stroke-width='0.5' opacity='0.3' /%3E%3Cline x1='50' y1='70' x2='30' y2='90' stroke='%2300d9ff' stroke-width='0.5' opacity='0.3' /%3E%3Cline x1='10' y1='10' x2='30' y2='90' stroke='%2300d9ff' stroke-width='0.5' opacity='0.2' /%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23neuralNet)' /%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -2;
+}

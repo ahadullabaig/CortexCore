@@ -1,0 +1,96 @@
+/* ============================================
+   PROBABILITY BARS - CONFIDENCE DISPLAY
+   ============================================ */
+
+/* ============================================
+   13. PROBABILITY BARS - CONFIDENCE DISPLAY
+   ============================================ */
+
+.probability-bars {
+  margin-top: 1.5rem;
+}
+
+.probability-bars h3 {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.prob-bar {
+  display: grid;
+  grid-template-columns: 120px 1fr 60px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.prob-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.prob-bar-bg {
+  height: 32px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border-moderate);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.prob-bar-fill {
+  height: 100%;
+  border-radius: 16px;
+  transition: width var(--duration-slow) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+}
+
+.prob-bar-fill.normal {
+  background: linear-gradient(90deg, var(--clinical-normal), var(--neural-teal));
+}
+
+.prob-bar-fill.arrhythmia {
+  background: linear-gradient(90deg, var(--clinical-critical), #ff6b6b);
+}
+
+/* Shimmer effect */
+.prob-bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: barShimmer 2s ease-in-out infinite;
+}
+
+@keyframes barShimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.prob-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-accent);
+  text-align: right;
+}
+

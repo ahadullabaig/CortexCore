@@ -1,0 +1,28 @@
+/* ============================================
+   LOW-END DEVICE OPTIMIZATIONS
+   ============================================ */
+
+/* ============================================
+   40. LOW-END DEVICE OPTIMIZATIONS
+   ============================================ */
+
+/* Detect low-end devices via JavaScript and apply this class to body */
+.low-end-device .neural-particles,
+.low-end-device .grid-scanner,
+.low-end-device .particle,
+.low-end-device .glow-accent,
+.low-end-device .gradient-animated {
+  display: none !important;
+  animation: none !important;
+}
+
+.low-end-device .spike-monitor-wrapper {
+  animation: none;
+}
+
+.low-end-device .prob-bar-glow {
+  animation: none;
+  display: none;
+}
+
+

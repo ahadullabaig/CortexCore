@@ -1,0 +1,74 @@
+/* ============================================
+   RESPONSIVE OVERRIDES FOR PHASE 2
+   ============================================ */
+
+/* ============================================
+   29. RESPONSIVE OVERRIDES FOR PHASE 2
+   ============================================ */
+
+@media (max-width: 768px) {
+  .neural-title {
+    font-size: var(--text-2xl);
+  }
+
+  .status-grid-enhanced {
+    grid-template-columns: 1fr;
+  }
+
+  .control-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .oscilloscope-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .results-primary {
+    grid-template-columns: 1fr;
+  }
+
+  .classification-value {
+    font-size: var(--text-3xl);
+  }
+
+  .performance-items {
+    grid-template-columns: 1fr;
+  }
+
+  .performance-value {
+    font-size: var(--text-3xl);
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-left,
+  .footer-right {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .neural-pulse-icon {
+    display: none;
+  }
+
+  .neural-version {
+    display: none;
+  }
+
+  .oscilloscope-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .spike-overlay {
+    position: static;
+    margin-top: 1rem;
+  }
+}
+
+

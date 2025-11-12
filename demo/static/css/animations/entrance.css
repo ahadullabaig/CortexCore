@@ -1,0 +1,112 @@
+/* ============================================
+   PAGE ENTRANCE ANIMATIONS (Base + Enhanced)
+   ============================================ */
+
+/* ============================================
+   17. ANIMATIONS - PAGE LOAD CHOREOGRAPHY
+   ============================================ */
+
+/* Staggered card reveals on page load */
+.card {
+  animation: slideUp var(--duration-slow) var(--ease-out);
+}
+
+.card:nth-child(1) {
+  animation-delay: 100ms;
+}
+
+.card:nth-child(2) {
+  animation-delay: 200ms;
+}
+
+.card:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+.card:nth-child(4) {
+  animation-delay: 400ms;
+}
+
+.card:nth-child(5) {
+  animation-delay: 500ms;
+}
+
+
+
+/* ============================================
+   30. PAGE ENTRANCE ANIMATIONS
+   ============================================ */
+
+/* Fade in from top (for header) */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in from bottom (for footer) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fade in from left (for scroll triggers) */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade in from right (for scroll triggers) */
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scale in from center (for modals/highlights) */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Apply entrance animations to header */
+.neural-header {
+  animation: fadeInDown var(--duration-slow) var(--ease-out);
+}
+
+/* Apply entrance animations to footer */
+.neural-footer {
+  animation: fadeInUp var(--duration-slow) var(--ease-out);
+  animation-delay: 600ms;
+  animation-fill-mode: backwards;
+}
+
+

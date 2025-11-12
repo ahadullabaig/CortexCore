@@ -1,0 +1,201 @@
+/* ============================================
+   ENCODER PANEL - NEURAL ENCODER (Base + Enhanced)
+   ============================================ */
+
+/* ============================================
+   9. CONTROLS - NEURAL ENCODER PANEL
+   ============================================ */
+
+.controls-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.control-group label {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.form-control {
+  font-family: var(--font-secondary);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-moderate);
+  border-radius: 6px;
+  padding: 0.75rem;
+  transition: all var(--duration-base);
+}
+
+.form-control:hover {
+  border-color: var(--border-strong);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--neural-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.form-control option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+
+
+/* ============================================
+   23. ENCODER PANEL (Enhanced - Neural Encoder)
+   ============================================ */
+
+.encoder-panel {
+  background: var(--gradient-card);
+}
+
+.encoder-controls {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.control-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.control-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label-text {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.05em;
+}
+
+.label-hint {
+  font-family: var(--font-secondary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.control-select-wrapper {
+  position: relative;
+}
+
+.control-select {
+  font-family: var(--font-secondary);
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-moderate);
+  border-radius: 6px;
+  padding: 0.75rem 3rem 0.75rem 1rem;
+  width: 100%;
+  cursor: pointer;
+  transition: all var(--duration-base);
+  appearance: none;
+}
+
+.control-select:hover {
+  border-color: var(--border-strong);
+}
+
+.control-select:focus {
+  outline: none;
+  border-color: var(--neural-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  font-size: var(--text-xs);
+}
+
+.control-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 4px;
+}
+
+.preview-label {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.preview-value {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--neural-cyan);
+  font-weight: 600;
+}
+
+.control-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/* Enhanced Button Styles */
+.btn-icon {
+  font-size: 1.2em;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.btn-text {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.btn-neural {
+  background: transparent;
+  border-color: var(--neural-cyan);
+  color: var(--neural-cyan);
+}
+
+.btn-neural:hover:not(:disabled) {
+  background: var(--neural-cyan);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.btn-clinical {
+  background: transparent;
+  border-color: var(--clinical-normal);
+  color: var(--clinical-normal);
+}
+
+.btn-clinical:hover:not(:disabled) {
+  background: var(--clinical-normal);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-green);
+  transform: translateY(-2px);
+}
+
+

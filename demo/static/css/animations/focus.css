@@ -1,0 +1,31 @@
+/* ============================================
+   INPUT FOCUS ANIMATIONS
+   ============================================ */
+
+/* ============================================
+   32. INPUT FOCUS ANIMATIONS
+   ============================================ */
+
+/* Focus glow animation */
+@keyframes focusGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(0, 217, 255, 0.2);
+  }
+}
+
+/* Enhanced focus state with scale and glow */
+.form-control:focus,
+.control-select:focus {
+  transform: scale(1.01);
+  animation: focusGlow 1.5s ease-in-out infinite;
+}
+
+/* Select dropdown open animation */
+.control-select {
+  transition: all var(--duration-base), transform var(--duration-fast);
+}
+
+

@@ -1,0 +1,13 @@
+/**
+ * Font Imports
+ * Google Fonts for CortexCore dark neuroscience aesthetic
+ */
+
+/* Primary Font: JetBrains Mono - Technical precision */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+/* Secondary Font: Archivo - Clinical clarity */
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&display=swap');
+
+/* Accent Font: Rajdhani - Futuristic display */
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap');

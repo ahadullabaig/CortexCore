@@ -1,0 +1,171 @@
+/* ============================================
+   TOAST NOTIFICATION SYSTEM
+   ============================================ */
+
+
+/* ============================================
+   44. TOAST NOTIFICATION SYSTEM
+   Phase 4: Error Boundaries & User Feedback
+   ============================================ */
+
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 300px;
+  max-width: 400px;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-moderate);
+  border-radius: 8px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(0, 217, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+
+  opacity: 0;
+  transform: translateX(400px);
+  transition:
+    opacity var(--duration-base) var(--ease-out),
+    transform var(--duration-base) var(--ease-out);
+
+  pointer-events: all;
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast-removing {
+  opacity: 0;
+  transform: translateX(400px) scale(0.9);
+}
+
+/* Toast type variants */
+.toast-success {
+  border-left: 4px solid var(--clinical-normal);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary),
+    rgba(16, 185, 129, 0.05)
+  );
+}
+
+.toast-error {
+  border-left: 4px solid var(--clinical-critical);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary),
+    rgba(239, 68, 68, 0.05)
+  );
+}
+
+.toast-warning {
+  border-left: 4px solid var(--clinical-warning);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary),
+    rgba(245, 158, 11, 0.05)
+  );
+}
+
+.toast-info {
+  border-left: 4px solid var(--neural-cyan);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary),
+    rgba(0, 217, 255, 0.05)
+  );
+}
+
+/* Toast icon */
+.toast-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Toast message */
+.toast-message {
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* Toast close button */
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.toast-close:focus-visible {
+  outline: 2px solid var(--neural-cyan);
+  outline-offset: 2px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .toast-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .toast {
+    min-width: auto;
+    max-width: none;
+  }
+}
+
+/* Accessibility: Reduce motion for users with prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    transition:
+      opacity var(--duration-fast) ease,
+      transform 0s;
+  }
+
+  .toast-visible {
+    transform: translateX(0);
+  }
+
+  .toast-removing {
+    transform: translateX(0);
+  }
+}
+

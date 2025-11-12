@@ -1,0 +1,56 @@
+/* ============================================
+   SCROLL-TRIGGERED ANIMATION CLASSES
+   ============================================ */
+
+/* ============================================
+   33. SCROLL-TRIGGERED ANIMATION CLASSES
+   ============================================ */
+
+/* Base class for scroll animations (hidden initially) */
+.animate-on-scroll {
+  opacity: 0;
+  transition: none;
+}
+
+/* Animated state (applied by JavaScript when in viewport) */
+.animate-on-scroll.animated {
+  opacity: 1;
+}
+
+/* Fade in up variant */
+.animate-on-scroll.fade-in-up {
+  transform: translateY(30px);
+}
+
+.animate-on-scroll.fade-in-up.animated {
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Fade in left variant */
+.animate-on-scroll.fade-in-left {
+  transform: translateX(-30px);
+}
+
+.animate-on-scroll.fade-in-left.animated {
+  animation: fadeInLeft var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Fade in right variant */
+.animate-on-scroll.fade-in-right {
+  transform: translateX(30px);
+}
+
+.animate-on-scroll.fade-in-right.animated {
+  animation: fadeInRight var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* Scale in variant */
+.animate-on-scroll.scale-in {
+  transform: scale(0.9);
+}
+
+.animate-on-scroll.scale-in.animated {
+  animation: scaleIn var(--duration-slow) var(--ease-spring) forwards;
+}
+
+

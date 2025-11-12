@@ -1,0 +1,88 @@
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* ============================================
+   19. RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) {
+  .status-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .controls-grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+
+  .results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .container {
+    max-width: 1200px;
+  }
+
+  .metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Large Desktop (1440px+) */
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1400px;
+  }
+
+  .plot-container {
+    min-height: 500px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 767px) {
+  :root {
+    --text-3xl: 2rem;
+    --text-4xl: 2.5rem;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .header .subtitle {
+    font-size: var(--text-xs);
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .prob-bar {
+    grid-template-columns: 100px 1fr 50px;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+

@@ -1,0 +1,35 @@
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* ============================================
+   38. PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+/* PERFORMANCE FIX: Removed permanent will-change to reduce GPU memory overhead */
+/* Apply will-change selectively only during active animations */
+
+/* GPU acceleration for cards only during scroll animations */
+.card.animate-on-scroll:not(.animated) {
+  will-change: transform, opacity;
+}
+
+.card.animated {
+  will-change: auto; /* Remove after animation completes */
+}
+
+/* Cards get GPU hint only during hover */
+.card:hover {
+  will-change: transform;
+}
+
+/* Form controls: only apply during focus */
+.form-control:focus,
+.control-select:focus {
+  will-change: transform;
+}
+
+/* Status metrics, result items, metric items:
+   These rarely animate, so no will-change needed */
+
+

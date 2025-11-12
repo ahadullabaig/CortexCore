@@ -1,0 +1,108 @@
+/* ============================================
+   CROSS-BROWSER FEATURE DETECTION & BROWSER FIXES
+   ============================================ */
+
+/* ============================================
+   41. CROSS-BROWSER FEATURE DETECTION & FALLBACKS
+   Phase 4: Production-Ready Compatibility
+   ============================================ */
+
+/* Content-visibility fallback for unsupported browsers */
+@supports not (content-visibility: auto) {
+  .card {
+    /* Browsers without content-visibility support will render normally */
+    /* No action needed - graceful degradation */
+  }
+}
+
+/* Backdrop-filter fallback for Safari < 14 and Firefox < 103 */
+@supports not (backdrop-filter: blur(10px)) {
+  .card {
+    background: rgba(15, 20, 25, 1); /* Solid background fallback */
+  }
+
+  .spike-legend,
+  .oscilloscope-wrapper::before {
+    background: rgba(10, 14, 26, 1); /* Solid fallback */
+  }
+}
+
+/* CSS Custom Properties fallback (for very old browsers - unlikely with our target) */
+@supports not (--css: variables) {
+  .card {
+    color: #e4e7ed; /* Hardcoded fallback */
+    background: linear-gradient(135deg, rgba(15, 20, 25, 0.95), rgba(10, 14, 26, 0.98));
+  }
+}
+
+/* Contain property fallback (Chrome 52+, Firefox 69+, Safari 15.4+) */
+@supports not (contain: layout) {
+  .card {
+    /* Isolation fallback - prevents style propagation */
+    isolation: isolate;
+  }
+}
+
+/* Grid layout fallback for ancient browsers */
+@supports not (display: grid) {
+  .status-grid-enhanced,
+  .performance-items,
+  .control-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .status-metric,
+  .performance-item {
+    flex: 1 1 250px;
+    min-width: 250px;
+  }
+}
+
+
+
+
+/* ============================================
+   42. BROWSER-SPECIFIC FIXES
+   Phase 4: Known Browser Issues
+   ============================================ */
+
+/* Firefox: Fix focus-visible outline rendering */
+@-moz-document url-prefix() {
+  button:focus-visible,
+  select:focus-visible,
+  input:focus-visible,
+  a:focus-visible {
+    outline-style: solid; /* Firefox prefers solid over auto */
+  }
+}
+
+/* Safari: Fix backdrop-filter performance on older versions */
+@supports (-webkit-backdrop-filter: blur(10px)) and (not (backdrop-filter: blur(10px))) {
+  .card {
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* Chrome/Edge: Optimize scroll performance for Plotly charts */
+@supports selector(::-webkit-scrollbar) {
+  #ecg-plot::-webkit-scrollbar,
+  #spike-plot::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  #ecg-plot::-webkit-scrollbar-thumb,
+  #spike-plot::-webkit-scrollbar-thumb {
+    background: var(--border-moderate);
+    border-radius: 4px;
+  }
+
+  #ecg-plot::-webkit-scrollbar-track,
+  #spike-plot::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+}
+
+

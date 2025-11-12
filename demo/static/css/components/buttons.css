@@ -1,0 +1,81 @@
+/* ============================================
+   BUTTONS - NEURAL CONTROL INTERFACE
+   ============================================ */
+
+
+/* ============================================
+   10. BUTTONS - NEURAL CONTROL INTERFACE
+   ============================================ */
+
+.btn {
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.875rem 1.5rem;
+  border: 2px solid;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--duration-base) var(--ease-in-out);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+  overflow: hidden;
+  text-transform: uppercase;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(-100%);
+  transition: transform var(--duration-base);
+}
+
+.btn:hover::before {
+  transform: translateX(0);
+}
+
+.btn-primary {
+  background: transparent;
+  border-color: var(--neural-cyan);
+  color: var(--neural-cyan);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--neural-cyan);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: transparent;
+  border-color: var(--clinical-normal);
+  color: var(--clinical-normal);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: var(--clinical-normal);
+  color: var(--bg-primary);
+  box-shadow: var(--glow-green);
+  transform: translateY(-2px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: var(--border-moderate);
+  color: var(--text-tertiary);
+}
+
+.btn:disabled::before {
+  display: none;
+}

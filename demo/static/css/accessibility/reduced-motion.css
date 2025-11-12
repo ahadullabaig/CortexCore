@@ -1,0 +1,59 @@
+/* ============================================
+   ACCESSIBILITY - ENHANCED REDUCED MOTION
+   ============================================ */
+
+/* ============================================
+   41. ACCESSIBILITY - ENHANCED REDUCED MOTION
+   ============================================ */
+
+/* Comprehensive reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  /* Override all animations */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Disable floating particles */
+  .neural-particles,
+  .grid-scanner,
+  .particle {
+    display: none !important;
+  }
+
+  /* Remove transform transitions */
+  .btn:hover,
+  .card:hover,
+  .status-metric:hover,
+  .result-item:hover,
+  .metric-item:hover,
+  .performance-item:hover {
+    transform: none !important;
+  }
+
+  /* Keep focus indicators visible but static */
+  .form-control:focus,
+  .control-select:focus {
+    animation: none !important;
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.3) !important;
+  }
+
+  /* Disable shimmer effects */
+  .prob-bar-glow {
+    display: none !important;
+  }
+
+  /* Disable pulsing indicators (but keep color) */
+  .status-badge.success::before,
+  .status-badge.warning::before,
+  .label-indicator.online,
+  .label-indicator.loading,
+  .legend-marker.active {
+    animation: none !important;
+  }
+}
+
+

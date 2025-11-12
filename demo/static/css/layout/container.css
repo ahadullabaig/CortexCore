@@ -1,0 +1,14 @@
+/* ============================================
+   css/layout/container.css
+   Section 5: Layout & Container System
+   ============================================ */
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+main {
+  padding: 2rem 0;
+}

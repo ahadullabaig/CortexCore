@@ -1,0 +1,76 @@
+/* ============================================
+   css/layout/footer.css
+   Section 15 + Section 28: Footer - Base & Enhanced
+   ============================================ */
+
+/* ===== BASE FOOTER (Section 15) ===== */
+
+.footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  padding: 1.5rem 0;
+  margin-top: 4rem;
+}
+
+.footer p {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-align: center;
+  margin: 0;
+}
+
+.footer a {
+  color: var(--text-secondary);
+  transition: color var(--duration-fast);
+}
+
+.footer a:hover {
+  color: var(--neural-cyan);
+}
+
+
+/* ===== ENHANCED FOOTER (Section 28) ===== */
+
+.neural-footer {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  padding: 1.5rem 0;
+  margin-top: 4rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-left,
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-text {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.footer-divider {
+  color: var(--border-moderate);
+}
+
+.footer-tech {
+  font-family: var(--font-primary);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 217, 255, 0.05);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 4px;
+}
