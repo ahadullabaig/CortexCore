@@ -677,10 +677,17 @@ async function checkHealth() {
         // Update status badges
         const modelStatus = document.getElementById('model-status');
         const deviceStatus = document.getElementById('device-status');
+        const modelIndicator = document.getElementById('model-indicator');
 
         if (data.model.loaded) {
             modelStatus.textContent = 'Loaded';
             modelStatus.className = 'status-badge success';
+
+            // Update model indicator dot to green
+            if (modelIndicator) {
+                modelIndicator.className = 'label-indicator online';
+                modelIndicator.setAttribute('aria-label', 'Model loaded and ready');
+            }
 
             // Update model accuracy if available
             const accElement = document.getElementById('model-accuracy');
@@ -692,6 +699,12 @@ async function checkHealth() {
         } else {
             modelStatus.textContent = 'Not Loaded';
             modelStatus.className = 'status-badge warning';
+
+            // Update model indicator dot to amber/loading
+            if (modelIndicator) {
+                modelIndicator.className = 'label-indicator loading';
+                modelIndicator.setAttribute('aria-label', 'Model not loaded');
+            }
         }
 
         deviceStatus.textContent = data.device.toUpperCase();
