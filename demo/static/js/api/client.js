@@ -180,17 +180,28 @@ export const ErrorHandler = {
             info: 'ℹ️'
         };
 
-        toast.innerHTML = `
-            <span class="toast-icon">${icons[type] || icons.info}</span>
-            <span class="toast-message">${message}</span>
-            <button class="toast-close" aria-label="Close notification">&times;</button>
-        `;
+        // Create elements safely to prevent XSS
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'toast-icon';
+        iconSpan.textContent = icons[type] || icons.info;
+
+        const messageSpan = document.createElement('span');
+        messageSpan.className = 'toast-message';
+        messageSpan.textContent = message; // Use textContent to prevent XSS
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'toast-close';
+        closeBtn.setAttribute('aria-label', 'Close notification');
+        closeBtn.innerHTML = '&times;'; // Safe: no user input
+
+        toast.appendChild(iconSpan);
+        toast.appendChild(messageSpan);
+        toast.appendChild(closeBtn);
 
         // Add to container
         container.appendChild(toast);
 
-        // Setup close button
-        const closeBtn = toast.querySelector('.toast-close');
+        // Setup close button (already created above)
         closeBtn.addEventListener('click', () => {
             toast.classList.add('toast-removing');
             setTimeout(() => toast.remove(), 300);

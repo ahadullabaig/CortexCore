@@ -3,6 +3,9 @@
  * Time formatting and managed timeout/animation frame tracking
  */
 
+// Import animationState at module level (circular dependency is safe in ES6 modules)
+import { animationState } from '../core/config.js';
+
 /**
  * Format milliseconds to human-readable string
  * @param {number} ms - Time in milliseconds
@@ -25,10 +28,7 @@ export function formatTime(ms) {
  * @param {number} delay - Delay in milliseconds
  * @returns {number} Timeout ID
  */
-export async function managedSetTimeout(callback, delay) {
-    // Import animationState dynamically to avoid circular dependency
-    const { animationState } = await import('../core/config.js');
-
+export function managedSetTimeout(callback, delay) {
     const id = setTimeout(() => {
         callback();
         // Remove from tracking after execution
@@ -48,10 +48,7 @@ export async function managedSetTimeout(callback, delay) {
  * @param {function} callback - Function to call on next frame
  * @returns {number} Animation frame ID
  */
-export async function managedRequestAnimationFrame(callback) {
-    // Import animationState dynamically to avoid circular dependency
-    const { animationState } = await import('../core/config.js');
-
+export function managedRequestAnimationFrame(callback) {
     const id = requestAnimationFrame((time) => {
         callback(time);
         // Remove from tracking after execution
