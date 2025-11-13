@@ -227,3 +227,10 @@ resources/presentations/*.key
 
 #Playwright MCP
 .playwright-mcp
+
+# ==========================================
+# Frontend Test Files
+# ==========================================
+
+# Phase test files (temporary development artifacts)
+demo/static/js/test-phase*.html
