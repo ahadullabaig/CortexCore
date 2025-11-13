@@ -10,7 +10,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - 60%+ energy efficiency vs CNNs
 - 92%+ accuracy on disease detection
 - <50ms inference time
-- **CRITICAL**: STDP implementation required for biological plausibility (see `docs/STDP_GUIDE.md`)
+- **CRITICAL**: STDP implementation required for biological plausibility (see `docs/guides/STDP_GUIDE.md`)
 
 **Current Status:**
 - ✅ SNN simulation on GPU (snnTorch)
@@ -438,6 +438,38 @@ cd scripts && bash 01_setup_environment.sh  # ✗ Wrong
 
 ## Context & Documentation
 
+### Documentation Structure
+
+Documentation is organized in `/docs/` by purpose and lifecycle:
+
+```
+docs/
+├── README.md                      # Documentation overview & navigation
+├── guides/                        # Active technical references (HOW-TO)
+│   ├── STDP_GUIDE.md
+│   ├── CODE_EXAMPLES.md
+│   ├── ENSEMBLE_AVERAGING_GUIDE.md
+│   └── TRANSFER_LEARNING_SETUP.md
+├── planning/                      # Roadmap & strategic planning
+│   ├── ROADMAP_QUICK_REFERENCE.md # Current active roadmap
+│   ├── NEXT_STEPS_REORGANIZED.md  # Current plan (v2.0)
+│   └── archived/                  # Superseded plans
+├── results/                       # Evaluation reports & benchmarks
+│   ├── phase1/                    # Tier 1 optimization results
+│   ├── phase2/                    # Comprehensive evaluation
+│   └── ensemble/                  # Ensemble validation
+├── implementation/                # Implementation summaries
+│   ├── ENSEMBLE_IMPLEMENTATION_SUMMARY.md
+│   ├── MIGRATION_SUMMARY.md
+│   └── FRONTEND_REDESIGN.md
+└── decisions/                     # Problem analysis & technical decisions
+    ├── CRITICAL_FIXES.md
+    ├── SEED_CONSISTENCY_FIX.md
+    └── DEPLOYMENT_DECISION.md
+```
+
+**Navigation**: See `/docs/README.md` for detailed directory descriptions and quick reference tables.
+
 ### Documentation Organization Strategy
 
 The project has **two documentation tracks**:
@@ -473,9 +505,9 @@ The project has **two documentation tracks**:
 ### Critical Documents (Always Relevant)
 
 - `context/PS.txt` - Original problem statement and requirements (**source of truth**)
-- `docs/STDP_GUIDE.md` - Full STDP implementation guide (**biological plausibility requirement**)
-- `docs/CODE_EXAMPLES.md` - Common SNN coding patterns and snippets
-- `docs/MIGRATION_SUMMARY.md` - Migration history and architectural decisions
+- `docs/guides/STDP_GUIDE.md` - Full STDP implementation guide (**biological plausibility requirement**)
+- `docs/guides/CODE_EXAMPLES.md` - Common SNN coding patterns and snippets
+- `docs/implementation/MIGRATION_SUMMARY.md` - Migration history and architectural decisions
 
 ### Quick Reference Decision Tree
 
@@ -494,10 +526,10 @@ Need to implement a feature?
 │  └─ ALWAYS → Read context/PS.txt
 │
 ├─ Implementing STDP learning?
-│  └─ ALWAYS → Read docs/STDP_GUIDE.md
+│  └─ ALWAYS → Read docs/guides/STDP_GUIDE.md
 │
 └─ Looking for code patterns/examples?
-   └─ ALWAYS → Read docs/CODE_EXAMPLES.md
+   └─ ALWAYS → Read docs/guides/CODE_EXAMPLES.md
 ```
 
 **Default Approach**: When in doubt, start with **ENHANCED_* docs** for faster iteration, then consult comprehensive docs only if needed for production scaling.
@@ -517,7 +549,7 @@ Need to implement a feature?
   - STDP for layer 1 (unsupervised feature learning)
   - Backprop for layer 2 (supervised classification)
 
-**Full Implementation**: See `docs/STDP_GUIDE.md` for complete code, training loops, visualization, troubleshooting.
+**Full Implementation**: See `docs/guides/STDP_GUIDE.md` for complete code, training loops, visualization, troubleshooting.
 
 ## Demo Application
 

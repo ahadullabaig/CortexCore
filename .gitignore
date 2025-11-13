@@ -93,9 +93,12 @@ models/
 
 # Logs and metrics
 experiments/
-results/
 logs/
 *.log
+
+# Results (but not documentation in docs/results/)
+/results/
+!results/**/.gitkeep
 
 # MLflow
 mlruns/
