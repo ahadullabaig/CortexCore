@@ -93,9 +93,12 @@ models/
 
 # Logs and metrics
 experiments/
-results/
 logs/
 *.log
+
+# Results (but not documentation in docs/results/)
+/results/
+!results/**/.gitkeep
 
 # MLflow
 mlruns/
@@ -222,9 +225,12 @@ resources/presentations/*.key
 # Use .gitkeep files to track empty directories
 # Example: echo "" > data/synthetic/.gitkeep
 
-#Output Documentation (auto-generated, user can regenerate)
-PHASE_1_SUCCESS_DOCUMENTATION.md
-STDP_IMPLEMENTATION_REPORT.md
-
 #Playwright MCP
 .playwright-mcp
+
+# ==========================================
+# Frontend Test Files
+# ==========================================
+
+# Phase test files (temporary development artifacts)
+demo/static/js/test-phase*.html

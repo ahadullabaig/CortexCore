@@ -10,17 +10,22 @@ This file provides guidance to Claude Code when working with code in this reposi
 - 60%+ energy efficiency vs CNNs
 - 92%+ accuracy on disease detection
 - <50ms inference time
-- **CRITICAL**: STDP implementation required for biological plausibility (see `docs/STDP_GUIDE.md`)
+- **CRITICAL**: STDP implementation required for biological plausibility (see `docs/guides/STDP_GUIDE.md`)
 
-**Current Status:**
+**Current Status (November 2025):**
 - ✅ SNN simulation on GPU (snnTorch)
-- ✅ Synthetic ECG data generation
-- ✅ Surrogate gradient backprop (working baseline)
-- ⚠️ STDP: Phase 1 uses backprop, Phase 2 will add hybrid STDP
+- ✅ Synthetic ECG data generation with realistic overlap
+- ✅ DeepSNN architecture (673K params) with FocalLoss
+- ✅ 89.5% test accuracy (90.6% sensitivity / 88.4% specificity)
+- ✅ Phase 2 comprehensive evaluation complete
+- ✅ MIT-BIH preprocessing complete (2,190 segments ready)
+- 🔄 Real data validation in progress (transfer learning)
+- ⚠️ STDP: Hybrid implementation available, backprop currently primary
 
 **Success Metrics:**
-- Minimum Viable: 85% accuracy, 40% energy efficiency, <100ms inference
-- Target: 92% accuracy, 60% energy efficiency, <50ms inference
+- Synthetic Data (Achieved): 89.5% accuracy, 60% energy efficiency, <90ms inference
+- MIT-BIH Target: 85-90% accuracy on real patient ECG data
+- Clinical Targets: ≥95% sensitivity, ≥90% specificity (close, within 5%)
 
 ## Quick Start
 
@@ -56,10 +61,15 @@ make clean                # Remove temp files
 | File | Purpose | Key APIs |
 |------|---------|----------|
 | `src/data.py` | Data generation & spike encoding | `generate_synthetic_ecg()`, `rate_encode()`, `ECGDataset` |
-| `src/model.py` | SNN architectures | `SimpleSNN`, `STDPLayer`, `measure_energy_efficiency()` |
-| `src/train.py` | Training pipeline | `train_epoch()`, `validate()`, `train_model()` |
-| `src/inference.py` | Model loading & prediction | `load_model()`, `predict()`, `batch_predict()` |
+| `src/model.py` | SNN architectures | `SimpleSNN`, `DeepSNN`, `STDPLayer`, `measure_energy_efficiency()` |
+| `src/losses.py` | Loss functions | `FocalLoss`, `WeightedBCELoss`, `BalancedCELoss` |
+| `src/train.py` | Training pipeline | `train_epoch()`, `validate()`, `train_model()` (backprop) |
+| `src/train_stdp.py` | STDP training pipeline | `train_stdp_epoch()`, `train_hybrid()` (biological learning) |
+| `src/stdp.py` | STDP algorithms | `stdp_update()`, `compute_stdp_weight_change()` |
+| `src/inference.py` | Model loading & prediction | `load_model()`, `predict()`, `ensemble_predict()` |
+| `src/preprocessing.py` | Real data preprocessing | MIT-BIH preprocessing, quality control, segmentation |
 | `src/utils.py` | Utilities | `set_seed()`, `get_device()`, `calculate_clinical_metrics()` |
+| `src/visualization.py` | Plotting & analysis | Spike rasters, ROC curves, confusion matrices |
 | `demo/app.py` | Flask web interface | Routes: `/`, `/health`, `/api/predict`, `/api/visualize_spikes` |
 
 ### Pipeline Flow
@@ -195,11 +205,21 @@ spikes = rate_encode(signal, num_steps=100)
 - Arrhythmia: 120 BPM, noise 0.1
 - Output: `train_ecg.pt`, `val_ecg.pt`, `test_ecg.pt`
 
-**SimpleSNN Architecture** (`src/model.py`):
+**Model Architectures** (`src/model.py`):
+
+**SimpleSNN (Baseline, 320K params)**:
 - Input: 2500 (10s × 250Hz)
-- Hidden: 128
-- Output: 2 classes
+- Layer 1: FC(2500 → 128) + LIF
+- Layer 2: FC(128 → 2) + LIF
 - Beta (membrane decay): 0.9
+
+**DeepSNN (Current, 673K params)**:
+- Input: 2500 (10s × 250Hz)
+- Layer 1: FC(2500 → 256) + LIF
+- Layer 2: FC(256 → 128) + Dropout(0.3) + LIF
+- Layer 3: FC(128 → 2) + LIF
+- Beta (membrane decay): 0.9
+- Training: FocalLoss(alpha=0.60, gamma=2.0) + G-mean early stopping
 
 **Spike Encoding** (`src/data.py:rate_encode`):
 - Default time steps: 100
@@ -235,16 +255,30 @@ spikes = rate_encode(signal, num_steps=100)
 
 ### Utility Scripts (scripts/)
 
-**Analysis & Debugging**:
-- `analyze_dataset_quality.py` - Validate dataset distribution, check for class imbalance
-- `evaluate_test_set.py` - Comprehensive test set evaluation with clinical metrics
-- `comprehensive_verification.py` - Full pipeline verification from data to inference
-- `code_review.py` - Static analysis and code quality checks
+**Training & Optimization**:
+- `train_full_stdp.py` - Full STDP training script (3-phase: STDP → Hybrid → Fine-tuning)
+- `train_tier1_fixes.py` - Tier 1 optimization (FocalLoss + G-mean early stopping)
+- `train_mitbih_transfer.py` - MIT-BIH transfer learning (2-stage pipeline)
+- `preprocess_mitbih.py` - MIT-BIH preprocessing pipeline (quality control, segmentation)
+- `optimize_threshold.py` - ROC curve threshold optimization
 
-**Testing**:
+**Evaluation & Analysis**:
+- `comprehensive_evaluation.py` - Phase 2 full evaluation suite (5 tasks, 1000 samples)
+- `benchmark_stdp.py` - STDP performance benchmarks
+- `analyze_dataset_quality.py` - Validate dataset distribution, check for class imbalance
+- `evaluate_test_set.py` - Clinical metrics evaluation
+
+**Testing & Validation**:
+- `comprehensive_verification.py` - Full pipeline verification from data to inference
+- `validate_ensemble_averaging.py` - Ensemble averaging validation
+- `validate_threshold_fix.py` - Threshold optimization validation
+- `validate_architectures.py` - Model architecture validation
 - `test_inference.py` - Test model loading and prediction functions
 - `test_flask_demo.py` - Test Flask endpoints and API responses
-- `train_snn_mvp.py` - Standalone SNN training script (alternative to 03_train_mvp_model.sh)
+
+**Debugging**:
+- `debug_model.py` - Model debugging diagnostics
+- `quick_stdp_test.py` - Quick STDP functionality test
 
 ### Development Philosophy
 
@@ -438,6 +472,72 @@ cd scripts && bash 01_setup_environment.sh  # ✗ Wrong
 
 ## Context & Documentation
 
+### Current Development Priority (November 2025)
+
+**⭐ NEXT MILESTONE: MIT-BIH Real Data Validation**
+
+After completing Phase 2 evaluation and Tier 1 optimization, the project has shifted to a **Real Data First** strategy:
+
+1. **Why the Pivot**:
+   - Tier 1 optimization hit fundamental synthetic data limits
+   - ROC analysis shows no threshold achieves both clinical targets
+   - Real-world validation is mandatory for deployment
+   - Day 10/30 - efficient to validate early vs over-optimizing synthetic
+
+2. **What's Ready**:
+   - ✅ MIT-BIH preprocessing complete: 2,190 high-quality ECG segments
+   - ✅ Transfer learning pipeline implemented (2-stage training)
+   - ✅ DeepSNN baseline model (89.5% accuracy on synthetic)
+   - ✅ Evaluation infrastructure (comprehensive_evaluation.py)
+
+3. **Next Steps** (See `docs/planning/NEXT_STEPS_REORGANIZED.md`):
+   ```bash
+   # Stage 1: Freeze layer 1, fine-tune layer 2 (20 epochs)
+   python scripts/train_mitbih_transfer.py --stage 1
+
+   # Stage 2: Full fine-tuning (30 epochs)
+   python scripts/train_mitbih_transfer.py --stage 2
+
+   # Or run both stages together
+   python scripts/train_mitbih_transfer.py --stage both
+   ```
+
+4. **Success Criteria**: 85-90% accuracy on real patient ECG (MIT-BIH test set)
+
+5. **Conditional Optimization**: Apply Phase 3-7 synthetic improvements ONLY if MIT-BIH underperforms
+
+### Documentation Structure
+
+Documentation is organized in `/docs/` by purpose and lifecycle:
+
+```
+docs/
+├── README.md                      # Documentation overview & navigation
+├── guides/                        # Active technical references (HOW-TO)
+│   ├── STDP_GUIDE.md
+│   ├── CODE_EXAMPLES.md
+│   ├── ENSEMBLE_AVERAGING_GUIDE.md
+│   └── TRANSFER_LEARNING_SETUP.md
+├── planning/                      # Roadmap & strategic planning
+│   ├── ROADMAP_QUICK_REFERENCE.md # Current active roadmap
+│   ├── NEXT_STEPS_REORGANIZED.md  # Current plan (v2.0)
+│   └── archived/                  # Superseded plans
+├── results/                       # Evaluation reports & benchmarks
+│   ├── phase1/                    # Tier 1 optimization results
+│   ├── phase2/                    # Comprehensive evaluation
+│   └── ensemble/                  # Ensemble validation
+├── implementation/                # Implementation summaries
+│   ├── ENSEMBLE_IMPLEMENTATION_SUMMARY.md
+│   ├── MIGRATION_SUMMARY.md
+│   └── FRONTEND_REDESIGN.md
+└── decisions/                     # Problem analysis & technical decisions
+    ├── CRITICAL_FIXES.md
+    ├── SEED_CONSISTENCY_FIX.md
+    └── DEPLOYMENT_DECISION.md
+```
+
+**Navigation**: See `/docs/README.md` for detailed directory descriptions and quick reference tables.
+
 ### Documentation Organization Strategy
 
 The project has **two documentation tracks**:
@@ -473,9 +573,9 @@ The project has **two documentation tracks**:
 ### Critical Documents (Always Relevant)
 
 - `context/PS.txt` - Original problem statement and requirements (**source of truth**)
-- `docs/STDP_GUIDE.md` - Full STDP implementation guide (**biological plausibility requirement**)
-- `docs/CODE_EXAMPLES.md` - Common SNN coding patterns and snippets
-- `docs/MIGRATION_SUMMARY.md` - Migration history and architectural decisions
+- `docs/guides/STDP_GUIDE.md` - Full STDP implementation guide (**biological plausibility requirement**)
+- `docs/guides/CODE_EXAMPLES.md` - Common SNN coding patterns and snippets
+- `docs/implementation/MIGRATION_SUMMARY.md` - Migration history and architectural decisions
 
 ### Quick Reference Decision Tree
 
@@ -494,10 +594,10 @@ Need to implement a feature?
 │  └─ ALWAYS → Read context/PS.txt
 │
 ├─ Implementing STDP learning?
-│  └─ ALWAYS → Read docs/STDP_GUIDE.md
+│  └─ ALWAYS → Read docs/guides/STDP_GUIDE.md
 │
 └─ Looking for code patterns/examples?
-   └─ ALWAYS → Read docs/CODE_EXAMPLES.md
+   └─ ALWAYS → Read docs/guides/CODE_EXAMPLES.md
 ```
 
 **Default Approach**: When in doubt, start with **ENHANCED_* docs** for faster iteration, then consult comprehensive docs only if needed for production scaling.
@@ -517,7 +617,7 @@ Need to implement a feature?
   - STDP for layer 1 (unsupervised feature learning)
   - Backprop for layer 2 (supervised classification)
 
-**Full Implementation**: See `docs/STDP_GUIDE.md` for complete code, training loops, visualization, troubleshooting.
+**Full Implementation**: See `docs/guides/STDP_GUIDE.md` for complete code, training loops, visualization, troubleshooting.
 
 ## Demo Application
 
@@ -598,6 +698,75 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 Vary between light and dark themes, different fonts, different aesthetics.
 You still tend to converge on common choices (Space Grotesk, for example) across generations.
 Avoid this: it is critical that you think outside the box!
+
+---
+
+## Recent Major Changes (November 2025)
+
+**If you're returning to this codebase after a break, here are the critical changes:**
+
+### 1. Model Architecture Evolution
+```python
+# OLD (SimpleSNN - 320K params):
+Layer 1: FC(2500 → 128) + LIF
+Layer 2: FC(128 → 2) + LIF
+
+# NEW (DeepSNN - 673K params):
+Layer 1: FC(2500 → 256) + LIF
+Layer 2: FC(256 → 128) + Dropout(0.3) + LIF  # Added regularization
+Layer 3: FC(128 → 2) + LIF
+```
+
+### 2. Loss Function & Training Strategy
+```python
+# OLD: Cross-entropy with max sensitivity early stopping
+loss = nn.CrossEntropyLoss()
+save_checkpoint_if(sensitivity > best_sensitivity)
+
+# NEW: FocalLoss with G-mean balanced early stopping
+loss = FocalLoss(alpha=0.60, gamma=2.0)  # Class-balanced
+g_mean = (sensitivity * specificity) ** 0.5
+save_checkpoint_if(g_mean > best_g_mean)  # Balanced optimization
+```
+
+### 3. Ensemble Prediction & Deterministic Seeding
+```python
+# OLD: Single prediction with stochastic variance
+pred = predict(model, signal)  # Different results each run
+
+# NEW: Ensemble averaging with deterministic seeding
+pred = ensemble_predict(model, signal, ensemble_size=3, base_seed=42)  # Reproducible
+```
+
+### 4. Current Model Files
+- **Primary Model**: `models/deep_focal_model.pt` (DeepSNN, Epoch 8, 7.8MB)
+- **Baseline Model**: `models/best_model.pt` (SimpleSNN, 3.7MB)
+- Use DeepSNN for production, SimpleSNN for comparison
+
+### 5. Development Roadmap Pivot
+- **Original Plan**: Optimize synthetic data (Phases 1-7) → Validate real data (Phase 8)
+- **Current Strategy**: Validate real data NOW (Phase 8) → Optimize only if needed (Phases 3-7)
+- **Rationale**: Hit synthetic data optimization ceiling, real validation is mandatory
+
+### 6. MIT-BIH Real Data Integration
+- **Status**: Preprocessing complete, 2,190 segments ready
+- **Next Action**: Run transfer learning (`scripts/train_mitbih_transfer.py`)
+- **Expected Timeline**: ~30-60 minutes on GPU for 2-stage training
+- **Target**: 85-90% accuracy on real patient ECG
+
+### 7. Model Performance Summary
+```
+DeepSNN (Current Model) - Synthetic Test Set (N=1000):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Accuracy:      89.5%
+Sensitivity:   90.6% (Target: ≥95%, Gap: -4.4%)
+Specificity:   88.4% (Target: ≥90%, Gap: -1.6%)
+PPV:           88.6% (Target: ≥85%, MET ✅)
+NPV:           90.4% (Target: ≥95%, Gap: -4.6%)
+AUC-ROC:       0.9739 (Excellent discrimination ✅)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Status: Close to clinical targets, ready for real data validation
+```
 
 ---
 
